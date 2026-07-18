@@ -133,8 +133,9 @@ function ToggleRow({ label, enabled, disabled, onClick }) {
     }}>
       <span style={{
         fontSize: 13.5,
-        fontWeight: 450,
-        color:    '#000000',
+        fontWeight: 700,
+        letterSpacing: '0.03em',
+        color:    '#ffffff',
         lineHeight: 1.4,
         paddingRight: 8,
       }}>
