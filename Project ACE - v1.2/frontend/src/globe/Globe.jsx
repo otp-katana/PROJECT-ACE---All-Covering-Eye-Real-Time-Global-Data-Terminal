@@ -1,9 +1,13 @@
 import { useRef, useEffect } from 'react'
 import { useGlobe } from './useGlobe'
 
-export default function Globe() {
+export default function Globe({ seismicLayers, ringsVisible, onPointClick, unfreezeSignal }) {
   const mountRef = useRef(null)
-  useGlobe(mountRef)
+  const { unfreeze } = useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick)
+
+  useEffect(() => {
+    if (unfreezeSignal) unfreeze()
+  }, [unfreezeSignal])
 
   return (
     <div

@@ -18,6 +18,10 @@ const PANEL_W  = 320
 export default function MainLayout() {
   const [active, setActive] = useState(null)
   const [isLive, setIsLive] = useState(true)
+  const [omoriToggles, setOmoriToggles] = useState({ seismic: true, faults: false, volcanic: false })
+  const [ringsVisible, setRingsVisible] = useState(true)
+  const [selectedPoint, setSelectedPoint] = useState(null)
+  const toggleOmori = id => setOmoriToggles(prev => ({ ...prev, [id]: !prev[id] }))
 // Backend bağlanınca: WebSocket onopen → setIsLive(true), onclose → setIsLive(false)
 
   return (
@@ -38,7 +42,12 @@ export default function MainLayout() {
         inset:    0,
         zIndex:   0,
       }}>
-        <Globe />
+        <Globe
+          seismicLayers={omoriToggles}
+          ringsVisible={ringsVisible}
+          onPointClick={data => setSelectedPoint(data)}
+          unfreezeSignal={selectedPoint === null}
+        />
       </div>
 
       {/* ── NAVBAR ── */}
@@ -72,6 +81,23 @@ export default function MainLayout() {
 </div>
 
         {/* NAVBAR RIGHT: NOTIFICATION + LIVE ICONS */}
+<button
+  onClick={() => setRingsVisible(v => !v)}
+  title="Orbital Rings"
+  style={{
+    background: ringsVisible ? 'rgba(190,174,213,0.3)' : 'transparent',
+    border: '1px solid rgba(190,174,213,0.5)',
+    borderRadius: 4,
+    color: '#000000',
+    fontSize: 14,
+    cursor: 'pointer',
+    padding: '4px 8px',
+    display: 'flex',
+    alignItems: 'center',
+  }}
+>
+  ◈
+</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button style={{
     background: 'transparent', border: 'none',
@@ -137,7 +163,7 @@ export default function MainLayout() {
     PROJECT ACE
   </div>
   <div style={{
-    fontSize: 10, letterSpacing: '0.12em',
+    fontSize: 11, letterSpacing: '0.12em',
     color: 'rgb(0, 0, 0)',
   }}>
     GLOBAL DASHBOARD v1.2
@@ -225,7 +251,7 @@ export default function MainLayout() {
           </div>
 
           {active === 'OMORI' && (
-  <OmoriPanel />
+  <OmoriPanel toggles={omoriToggles} onToggle={toggleOmori} />
 )}
 
           {active !== 'OMORI' && (
@@ -241,6 +267,75 @@ export default function MainLayout() {
         </aside>
       )}
 
+      {/* ── POINT DETAIL PANEL — SAĞ, SABİT ── */}
+      {selectedPoint && (
+        <aside style={{
+          position:       'absolute',
+          top:            NAV_H + 38,
+          right:          24,
+          width:          SIDE_W + 240,
+          bottom:         24,
+          zIndex:         50,
+          background:     'rgba(249, 232, 255, 0.55)',
+          backdropFilter: 'blur(5px)',
+          border:         '2px solid rgba(232, 213, 239, 0.45)',
+          borderRadius:   16,
+          margin:         '0 8px',
+          overflowY:      'visible',
+          padding:        16,
+        }}>
+
+          {/* Başlık */}
+          <div style={{
+            display:         'flex',
+            alignItems:      'center',
+            justifyContent:  'space-between',
+            marginBottom:    16,
+            paddingBottom:   12,
+            borderBottom:    '1px solid rgba(232, 213, 239, 0.22)',
+          }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.14em', color: '#000000' }}>
+                {selectedPoint.type === 'seismic' ? 'SEISMIC EVENT' : 'VOLCANIC ACTIVITY'}
+              </div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', color: '#0000008f', marginTop: 5 }}>
+                DETAIL
+              </div>
+            </div>
+            <button onClick={() => setSelectedPoint(null)} style={{
+              background: 'transparent',
+              border: '1px solid rgb(190, 174, 213)',
+              borderRadius: 4, color: 'rgba(255,255,255,0.35)',
+              fontSize: 12, padding: '3px 7px', cursor: 'pointer',
+            }}>✕</button>
+          </div>
+
+          {/* İçerik */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <DetailRow label="LATITUDE"  value={selectedPoint.lat.toFixed(2)} />
+            <DetailRow label="LONGITUDE" value={selectedPoint.lon.toFixed(2)} />
+            <DetailRow label="MAGNITUDE" value={`M${selectedPoint.mag.toFixed(1)}`} />
+          </div>
+
+        </aside>
+      )}
+
+    </div>
+  )
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '8px 0', borderBottom: '1px solid rgba(232, 213, 239, 0.15)',
+    }}>
+      <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#0000008f', fontWeight: 700 }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#000000' }}>
+        {value}
+      </span>
     </div>
   )
 }

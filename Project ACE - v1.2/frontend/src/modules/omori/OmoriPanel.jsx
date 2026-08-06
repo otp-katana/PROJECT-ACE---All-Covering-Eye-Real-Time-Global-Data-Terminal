@@ -43,17 +43,8 @@ const CORE_ICONS = {
   cassandra_ai:  '✦',
 }
 
-export default function OmoriPanel() {
-  const [openCore, setOpenCore] = useState('core_dynamics')  // CORE - TURE/FALSE
-  const [toggles, setToggles] = useState({
-    seismic: true,
-    faults:  false,
-    volcanic:false,
-  })
-
-  const toggle = id => {
-    setToggles(prev => ({ ...prev, [id]: !prev[id] }))
-  }
+export default function OmoriPanel({ toggles, onToggle }) {
+  const [openCore, setOpenCore] = useState('core_dynamics')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -112,7 +103,7 @@ export default function OmoriPanel() {
                 label={item.label}
                 enabled={item.active ? (toggles[item.id] ?? false) : false}
                 disabled={!item.active}
-                onClick={() => item.active && toggle(item.id)}
+                onClick={() => item.active && onToggle(item.id)}
               />
             ))}
           </div>
