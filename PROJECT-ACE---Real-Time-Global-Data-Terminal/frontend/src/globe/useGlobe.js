@@ -3,16 +3,6 @@ import * as THREE from 'three'
 import { feature } from 'topojson-client'
 
 // MOCK KATMANI
-const MOCK_QUAKES = [
-  { lat: 39.9, lon: 32.8, mag: 4.2 },
-  { lat: 38.4, lon: 27.1, mag: 3.6 },
-  { lat: 40.1, lon: 29.0, mag: 5.1 },
-  { lat: 35.7, lon: 139.7, mag: 4.8 },
-  { lat: -33.4, lon: -70.6, mag: 5.4 },
-  { lat: 37.0, lon: 22.4, mag: 3.9 },
-  { lat: 34.0, lon: -118.2, mag: 4.5 },
-  { lat: -6.2, lon: 106.8, mag: 4.0 },
-]
 
 const MOCK_VOLCANOES = [
   { lat: 37.7, lon: 15.0, mag: 4.5 },   // Etna
