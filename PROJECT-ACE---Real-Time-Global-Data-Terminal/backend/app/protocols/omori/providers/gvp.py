@@ -21,12 +21,16 @@ async def fetch_gvp_volcanoes() -> list[SeismicEvent]:
             continue  # koordinatı olmayan kaydı atla
 
         coords = geometry["coordinates"]
+        if coords[0] is None or coords[1] is None:
+            continue  # bozuk koordinatı atla
+
         props = feature.get("properties", {})
         volcanoes.append(SeismicEvent(
             lat=coords[1],
             lon=coords[0],
             mag=4.0,
-            place=props.get("Volcano_Name") or props.get("volcano_na"),
+            place=props.get("VolcanoName"),
             time=None,
+            last_eruption=props.get("LastEruption"),
         ))
     return volcanoes

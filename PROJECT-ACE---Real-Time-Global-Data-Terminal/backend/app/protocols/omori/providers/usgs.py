@@ -1,7 +1,7 @@
 import httpx
 from app.protocols.omori.schemas import SeismicEvent
 
-USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson"
+USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
 
 async def fetch_usgs_events() -> list[SeismicEvent]:
     async with httpx.AsyncClient(timeout=10.0) as client:

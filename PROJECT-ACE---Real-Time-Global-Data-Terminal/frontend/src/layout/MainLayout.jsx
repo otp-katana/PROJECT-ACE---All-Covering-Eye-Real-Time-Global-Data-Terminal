@@ -22,6 +22,8 @@ export default function MainLayout() {
   const [ringsVisible, setRingsVisible] = useState(true)
   const [selectedPoint, setSelectedPoint] = useState(null)
   const toggleOmori = id => setOmoriToggles(prev => ({ ...prev, [id]: !prev[id] }))
+  const [magnitudeFilter, setMagnitudeFilter] = useState(1.0)
+  const [eruptionYearFilter, setEruptionYearFilter] = useState(-10000)
 // Backend bağlanınca: WebSocket onopen → setIsLive(true), onclose → setIsLive(false)
 
   return (
@@ -47,6 +49,8 @@ export default function MainLayout() {
           ringsVisible={ringsVisible}
           onPointClick={data => setSelectedPoint(data)}
           unfreezeSignal={selectedPoint === null}
+          magnitudeFilter={magnitudeFilter}
+          eruptionYearFilter={eruptionYearFilter}
         />
       </div>
 
@@ -251,7 +255,13 @@ export default function MainLayout() {
           </div>
 
           {active === 'OMORI' && (
-  <OmoriPanel toggles={omoriToggles} onToggle={toggleOmori} />
+  <OmoriPanel
+    toggles={omoriToggles}
+    onToggle={toggleOmori}
+    magnitudeFilter={magnitudeFilter}
+    onMagnitudeChange={setMagnitudeFilter}
+    onEruptionYearChange={setEruptionYearFilter}
+  />
 )}
 
           {active !== 'OMORI' && (

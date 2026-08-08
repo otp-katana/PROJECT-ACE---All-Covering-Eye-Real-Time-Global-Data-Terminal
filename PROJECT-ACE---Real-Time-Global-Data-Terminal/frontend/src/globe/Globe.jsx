@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react'
 import { useGlobe } from './useGlobe'
 
-export default function Globe({ seismicLayers, ringsVisible, onPointClick, unfreezeSignal }) {
+export default function Globe({ seismicLayers, ringsVisible, onPointClick, unfreezeSignal, magnitudeFilter, eruptionYearFilter }) {
   const mountRef = useRef(null)
-  const { unfreeze } = useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick)
+  const { unfreeze } = useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter, eruptionYearFilter)
 
   useEffect(() => {
     if (unfreezeSignal) unfreeze()

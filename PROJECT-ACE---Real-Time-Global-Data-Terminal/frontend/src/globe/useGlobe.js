@@ -4,14 +4,6 @@ import { feature } from 'topojson-client'
 
 // MOCK KATMANI
 
-const MOCK_VOLCANOES = [
-  { lat: 37.7, lon: 15.0, mag: 4.5 },   // Etna
-  { lat: -8.3, lon: 115.5, mag: 3.8 },  // Bali/Agung
-  { lat: 19.0, lon: -98.6, mag: 4.0 },  // Popocatépetl
-  { lat: 46.2, lon: -122.2, mag: 3.5 }, // St. Helens
-  { lat: -1.4, lon: 29.2, mag: 4.2 },   // Nyiragongo
-  { lat: 64.9, lon: -17.0, mag: 3.6 },  // İzlanda
-]
 
 const MOCK_FAULTS = [
   { name: 'NAF', points: [
@@ -28,7 +20,7 @@ const MOCK_FAULTS = [
   ]},
 ]
 
-export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick) {
+export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter, eruptionYearFilter) {
   const sceneRef    = useRef(null)
   const cameraRef   = useRef(null)
   const rendererRef = useRef(null)
@@ -39,9 +31,12 @@ export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick) {
 
   const layersRef = useRef({ seismic: null, volcanic: null, faults: null })
   const isDragging = useRef(false)
+  const solidSphereRef = useRef(null)
   const frozen = useRef(false)
   const prevMouse   = useRef({ x: 0, y: 0 })
 
+
+  // ANA useEFFECT
   useEffect(() => {
     if (!mountRef.current) return
 
@@ -69,12 +64,14 @@ export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick) {
     globeRef.current = globeGroup
 
     // ── İç dolgu küre ──────────────────────────────────────────────────
-    globeGroup.add(new THREE.Mesh(
+    const solidSphere = new THREE.Mesh(
       new THREE.SphereGeometry(0.995, 64, 64),
       new THREE.MeshBasicMaterial({
         color: 0x08080f, transparent: true, opacity: 0.92
       })
-    ))
+    )
+    globeGroup.add(solidSphere)
+    solidSphereRef.current = solidSphere
 
     // ── Tel kafes küre ─────────────────────────────────────────────────
     globeGroup.add(new THREE.Mesh(
@@ -243,7 +240,7 @@ ringGroup.add(ringHalo)
     const pointerNDC = new THREE.Vector2()
 
     const onClick = e => {
-      if (isDragging.current) return // sürükleme sonrası yanlışlıkla tık algılamasın
+      if (isDragging.current) return
 
       const rect = renderer.domElement.getBoundingClientRect()
       pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
@@ -254,14 +251,23 @@ ringGroup.add(ringHalo)
       const seismicGroup  = layersRef.current.seismic
       const volcanicGroup = layersRef.current.volcanic
       const targets = []
-      if (seismicGroup)  targets.push(...seismicGroup.children)
-      if (volcanicGroup) targets.push(...volcanicGroup.children)
+
+      // Sadece görünür (toggle açık) katmanların noktalarını hedef listesine al
+      if (seismicGroup?.visible)  targets.push(...seismicGroup.children)
+      if (volcanicGroup?.visible) targets.push(...volcanicGroup.children)
+
+      // Küre yüzeyini de engel olarak ekle
+      if (solidSphereRef.current) targets.push(solidSphereRef.current)
 
       const intersects = raycaster.intersectObjects(targets, true)
 
       if (intersects.length > 0) {
-        // Tıklanan mesh'in userData'sı kendi pointGroup'unda — yukarı çıkıp bul
-        let obj = intersects[0].object
+        const nearest = intersects[0].object
+
+        // En yakın çarpışma küre yüzeyiyse, hiçbir noktaya tıklanmadı say
+        if (nearest === solidSphereRef.current) return
+
+        let obj = nearest
         while (obj && !obj.userData?.type) obj = obj.parent
 
         if (obj?.userData?.type) {
@@ -272,23 +278,26 @@ ringGroup.add(ringHalo)
     }
 
     const onHoverMove = e => {
-      if (frozen.current) return
+    if (frozen.current) return
 
-      const rect = renderer.domElement.getBoundingClientRect()
-      pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-      pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+    const rect = renderer.domElement.getBoundingClientRect()
+    pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
 
-      raycaster.setFromCamera(pointerNDC, camera)
+    raycaster.setFromCamera(pointerNDC, camera)
 
-      const seismicGroup  = layersRef.current.seismic
-      const volcanicGroup = layersRef.current.volcanic
-      const targets = []
-      if (seismicGroup)  targets.push(...seismicGroup.children)
-      if (volcanicGroup) targets.push(...volcanicGroup.children)
+    const seismicGroup  = layersRef.current.seismic
+    const volcanicGroup = layersRef.current.volcanic
+    const targets = []
+    if (seismicGroup?.visible)  targets.push(...seismicGroup.children)
+    if (volcanicGroup?.visible) targets.push(...volcanicGroup.children)
+    if (solidSphereRef.current) targets.push(solidSphereRef.current)
 
-      const intersects = raycaster.intersectObjects(targets, true)
-      renderer.domElement.style.cursor = intersects.length > 0 ? 'pointer' : (isDragging.current ? 'grabbing' : 'grab')
-    }
+    const intersects = raycaster.intersectObjects(targets, true)
+    const hoveringPoint = intersects.length > 0 && intersects[0].object !== solidSphereRef.current
+
+    renderer.domElement.style.cursor = hoveringPoint ? 'pointer' : (isDragging.current ? 'grabbing' : 'grab')
+  }
 
     const onMouseDown = e => {
       if (frozen.current) return
@@ -384,57 +393,90 @@ ringGroup.add(ringHalo)
 
   // useEFFECT KATMANI
 
-  // ── Seismic katmanı — toggle'a göre doldur/gizle ────────────────────
+  // ── Seismic katmanı — periyodik yenileme ile doldur/gizle ────────────
   useEffect(() => {
     const group = layersRef.current.seismic
     if (!group) return
 
-    if (seismicLayers?.seismic && group.children.length === 0) {
+    let cancelled = false
+
+    const renderPoints = (events) => {
+      // Önceki noktaları temizle (geometri/materyal sızıntısı olmasın diye dispose ediyoruz)
+      group.children.forEach(pointGroup => {
+        pointGroup.children.forEach(mesh => {
+          mesh.geometry.dispose()
+          mesh.material.dispose()
+        })
+      })
+      group.clear()
+
+      events.forEach(q => {
+        const phi   = (90 - q.lat) * Math.PI / 180
+        const theta = (q.lon + 180) * Math.PI / 180
+        const pos = new THREE.Vector3(
+          -Math.sin(phi) * Math.cos(theta),
+          Math.cos(phi),
+          Math.sin(phi) * Math.sin(theta)
+        )
+
+        const scale = q.mag / 5
+
+        const pointGroup = new THREE.Group()
+        pointGroup.userData = { type: 'seismic', lat: q.lat, lon: q.lon, mag: q.mag }
+
+        const core = new THREE.Mesh(
+          new THREE.SphereGeometry(0.012 * scale, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.95, depthWrite: false })
+        )
+        core.position.copy(pos)
+        pointGroup.add(core)
+
+        const halo1 = new THREE.Mesh(
+          new THREE.SphereGeometry(0.022 * scale, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.30, depthWrite: false })
+        )
+        halo1.position.copy(pos)
+        pointGroup.add(halo1)
+
+        const halo2 = new THREE.Mesh(
+          new THREE.SphereGeometry(0.034 * scale, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0xBEAED5, transparent: true, opacity: 0.14, depthWrite: false })
+        )
+        halo2.position.copy(pos)
+        pointGroup.add(halo2)
+
+        group.add(pointGroup)
+      })
+
+      // Yeni çizilen noktalara güncel filtreyi uygula
+      group.children.forEach(pointGroup => {
+        const mag = pointGroup.userData?.mag ?? 0
+        pointGroup.visible = mag >= (magnitudeFilter ?? 1.0)
+      })
+    }
+
+    const fetchAndRender = () => {
       fetch('http://localhost:8000/api/omori/events')
         .then(r => r.json())
         .then(events => {
-          events.forEach(q => {
-            const phi   = (90 - q.lat) * Math.PI / 180
-            const theta = (q.lon + 180) * Math.PI / 180
-            const pos = new THREE.Vector3(
-              -Math.sin(phi) * Math.cos(theta),
-              Math.cos(phi),
-              Math.sin(phi) * Math.sin(theta)
-            )
-
-            const scale = q.mag / 5
-
-            const pointGroup = new THREE.Group()
-            pointGroup.userData = { type: 'seismic', lat: q.lat, lon: q.lon, mag: q.mag }
-
-            const core = new THREE.Mesh(
-              new THREE.SphereGeometry(0.012 * scale, 12, 12),
-              new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.95, depthWrite: false })
-            )
-            core.position.copy(pos)
-            pointGroup.add(core)
-
-            const halo1 = new THREE.Mesh(
-              new THREE.SphereGeometry(0.022 * scale, 12, 12),
-              new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.30, depthWrite: false })
-            )
-            halo1.position.copy(pos)
-            pointGroup.add(halo1)
-
-            const halo2 = new THREE.Mesh(
-              new THREE.SphereGeometry(0.034 * scale, 12, 12),
-              new THREE.MeshBasicMaterial({ color: 0xBEAED5, transparent: true, opacity: 0.14, depthWrite: false })
-            )
-            halo2.position.copy(pos)
-            pointGroup.add(halo2)
-
-            group.add(pointGroup)
-          })
+          if (!cancelled) renderPoints(events)
         })
         .catch(err => console.error('USGS fetch failed:', err))
     }
 
-    group.visible = !!seismicLayers?.seismic
+    if (seismicLayers?.seismic) {
+      fetchAndRender()
+      const intervalId = setInterval(fetchAndRender, 60000) // 60 saniyede bir yenile
+
+      group.visible = true
+
+      return () => {
+        cancelled = true
+        clearInterval(intervalId)
+      }
+    } else {
+      group.visible = false
+    }
   }, [seismicLayers?.seismic])
   
   // ── Volcanic katmanı — toggle'a göre doldur/gizle ────────────────────
@@ -443,45 +485,52 @@ ringGroup.add(ringHalo)
     if (!group) return
 
     if (seismicLayers?.volcanic && group.children.length === 0) {
-      MOCK_VOLCANOES.forEach(v => {
-        const phi   = (90 - v.lat) * Math.PI / 180
-        const theta = (v.lon + 180) * Math.PI / 180
-        const pos = new THREE.Vector3(
-          -Math.sin(phi) * Math.cos(theta),
-          Math.cos(phi),
-          Math.sin(phi) * Math.sin(theta)
-        )
+      fetch('http://localhost:8000/api/omori/volcanoes')
+        .then(r => r.json())
+        .then(volcanoes => {
+          volcanoes.forEach(v => {
+            if (typeof v.lat !== 'number' || typeof v.lon !== 'number') return
 
-        const scale = v.mag / 5
+            const phi   = (90 - v.lat) * Math.PI / 180
+            const theta = (v.lon + 180) * Math.PI / 180
+            const pos = new THREE.Vector3(
+              -Math.sin(phi) * Math.cos(theta),
+              Math.cos(phi),
+              Math.sin(phi) * Math.sin(theta)
+            )
 
-        const pointGroup = new THREE.Group()
-        pointGroup.userData = { type: 'volcanic', lat: v.lat, lon: v.lon, mag: v.mag }
+            const scale = v.mag / 5
 
-        const cone = new THREE.Mesh(
-          new THREE.ConeGeometry(0.014 * scale, 0.032 * scale, 5),
-          new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.9, depthWrite: false })
-        )
-        cone.position.copy(pos)
-        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), pos.clone().normalize())
-        cone.position.addScaledVector(pos.clone().normalize(), 0.014 * scale)
-        pointGroup.add(cone)
+            const pointGroup = new THREE.Group()
+            pointGroup.userData = { type: 'volcanic', lat: v.lat, lon: v.lon, mag: v.mag, place: v.place, lastEruption: v.last_eruption }
 
-        const halo1 = new THREE.Mesh(
-          new THREE.SphereGeometry(0.024 * scale, 12, 12),
-          new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.22, depthWrite: false })
-        )
-        halo1.position.copy(pos)
-        pointGroup.add(halo1)
+            const cone = new THREE.Mesh(
+              new THREE.ConeGeometry(0.014 * scale, 0.032 * scale, 5),
+              new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.9, depthWrite: false })
+            )
+            cone.position.copy(pos)
+            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), pos.clone().normalize())
+            cone.position.addScaledVector(pos.clone().normalize(), 0.014 * scale)
+            pointGroup.add(cone)
 
-        const halo2 = new THREE.Mesh(
-          new THREE.SphereGeometry(0.038 * scale, 12, 12),
-          new THREE.MeshBasicMaterial({ color: 0xBEAED5, transparent: true, opacity: 0.10, depthWrite: false })
-        )
-        halo2.position.copy(pos)
-        pointGroup.add(halo2)
+            const halo1 = new THREE.Mesh(
+              new THREE.SphereGeometry(0.024 * scale, 12, 12),
+              new THREE.MeshBasicMaterial({ color: 0xE8D5EF, transparent: true, opacity: 0.22, depthWrite: false })
+            )
+            halo1.position.copy(pos)
+            pointGroup.add(halo1)
 
-        group.add(pointGroup)
-      })
+            const halo2 = new THREE.Mesh(
+              new THREE.SphereGeometry(0.038 * scale, 12, 12),
+              new THREE.MeshBasicMaterial({ color: 0xBEAED5, transparent: true, opacity: 0.10, depthWrite: false })
+            )
+            halo2.position.copy(pos)
+            pointGroup.add(halo2)
+
+            group.add(pointGroup)
+          })
+        })
+        .catch(err => console.error('GVP fetch failed:', err))
     }
 
     group.visible = !!seismicLayers?.volcanic
@@ -525,6 +574,29 @@ ringGroup.add(ringHalo)
   }, [ringsVisible])
 
   const unfreeze = () => { frozen.current = false }
+
+  // ── Magnitude filtresi — API'ye gitmeden sadece görünürlük ───────────
+  useEffect(() => {
+    const group = layersRef.current.seismic
+    if (!group) return
+
+    group.children.forEach(pointGroup => {
+      const mag = pointGroup.userData?.mag ?? 0
+      pointGroup.visible = mag >= (magnitudeFilter ?? 1.0)
+    })
+  }, [magnitudeFilter])
+
+  // ── Eruption year filtresi — API'ye gitmeden sadece görünürlük ───────
+  useEffect(() => {
+    const group = layersRef.current.volcanic
+    if (!group) return
+
+    group.children.forEach(pointGroup => {
+      const year = pointGroup.userData?.lastEruption
+      // year null/undefined ise (tarih bilinmiyor) her zaman görünür kalsın
+      pointGroup.visible = year == null || year >= (eruptionYearFilter ?? -10000)
+    })
+  }, [eruptionYearFilter])
 
   return { sceneRef, globeRef, autoRotate, unfreeze }
 }
