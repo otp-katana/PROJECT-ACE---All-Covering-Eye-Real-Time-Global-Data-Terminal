@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Globe from '../globe/Globe'
 import OmoriPanel from '../modules/omori/OmoriPanel'
 
@@ -22,8 +22,28 @@ export default function MainLayout() {
   const [ringsVisible, setRingsVisible] = useState(true)
   const [selectedPoint, setSelectedPoint] = useState(null)
   const toggleOmori = id => setOmoriToggles(prev => ({ ...prev, [id]: !prev[id] }))
+  const [seismicEvents, setSeismicEvents] = useState([])
   const [magnitudeFilter, setMagnitudeFilter] = useState(1.0)
   const [eruptionYearFilter, setEruptionYearFilter] = useState(-10000)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchEvents = () => {
+      fetch('http://localhost:8000/api/omori/events')
+        .then(r => r.json())
+        .then(data => { if (!cancelled) setSeismicEvents(data) })
+        .catch(err => console.error('USGS fetch failed:', err))
+    }
+
+    fetchEvents()
+    const intervalId = setInterval(fetchEvents, 60000)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [])
 // Backend bağlanınca: WebSocket onopen → setIsLive(true), onclose → setIsLive(false)
 
   return (
@@ -51,6 +71,7 @@ export default function MainLayout() {
           unfreezeSignal={selectedPoint === null}
           magnitudeFilter={magnitudeFilter}
           eruptionYearFilter={eruptionYearFilter}
+          seismicEvents={seismicEvents}
         />
       </div>
 
@@ -261,6 +282,7 @@ export default function MainLayout() {
     magnitudeFilter={magnitudeFilter}
     onMagnitudeChange={setMagnitudeFilter}
     onEruptionYearChange={setEruptionYearFilter}
+    seismicEvents={seismicEvents}
   />
 )}
 

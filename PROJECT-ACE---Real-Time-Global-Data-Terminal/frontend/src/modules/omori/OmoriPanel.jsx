@@ -43,7 +43,7 @@ const CORE_ICONS = {
   cassandra_ai:  '✦',
 }
 
-export default function OmoriPanel({ toggles, onToggle, magnitudeFilter, onMagnitudeChange, eruptionYearFilter, onEruptionYearChange }) {
+export default function OmoriPanel({ toggles, onToggle, magnitudeFilter, onMagnitudeChange, eruptionYearFilter, onEruptionYearChange, seismicEvents }) {
   const [openCore, setOpenCore] = useState('core_dynamics')
   const [expandedItems, setExpandedItems] = useState({})
 
@@ -112,7 +112,10 @@ export default function OmoriPanel({ toggles, onToggle, magnitudeFilter, onMagni
                     expanded={!!expandedItems[item.id]}
                   />
                   {item.id === 'seismic' && expandedItems.seismic && (
-                    <MagnitudeSlider value={magnitudeFilter} onChange={onMagnitudeChange} />
+                    <>
+                      <MagnitudeSlider value={magnitudeFilter} onChange={onMagnitudeChange} />
+                      <EventLog events={seismicEvents?.filter(e => e.mag >= magnitudeFilter).sort((a, b) => Number(b.time) - Number(a.time))} />
+                    </>
                   )}
                   {item.id === 'volcanic' && expandedItems.volcanic && (
                     <EruptionYearSlider value={eruptionYearFilter} onChange={onEruptionYearChange} />
