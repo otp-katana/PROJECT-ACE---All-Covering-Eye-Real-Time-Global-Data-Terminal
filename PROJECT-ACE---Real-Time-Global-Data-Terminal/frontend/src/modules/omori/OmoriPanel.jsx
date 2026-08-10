@@ -241,7 +241,7 @@ function EruptionYearSlider({ value, onChange }) {
         fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
         color: 'rgba(0,0,0,0.55)', marginBottom: 6,
       }}>
-        <span>SON AKTİVİTE</span>
+        <span>LAST ACTIVITY</span>
         <span>{value <= -10000 ? 'TÜMÜ' : `${label}+`}</span>
       </div>
       <input
@@ -269,7 +269,7 @@ function EventLog({ events }) {
     }}>
       {(!events || events.length === 0) && (
         <div style={{ fontSize: 10, color: 'rgba(0,0,0,0.35)', padding: '4px 2px' }}>
-          Veri bekleniyor...
+          Waiting for data...
         </div>
       )}
       {events?.map((e, i) => (

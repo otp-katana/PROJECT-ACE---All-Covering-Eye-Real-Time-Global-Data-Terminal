@@ -20,7 +20,7 @@ const MOCK_FAULTS = [
   ]},
 ]
 
-export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter, eruptionYearFilter, seismicEvents) {
+export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter, eruptionYearFilter, seismicEvents, onSelectionBoxChange) {
   const sceneRef    = useRef(null)
   const cameraRef   = useRef(null)
   const rendererRef = useRef(null)
@@ -31,6 +31,10 @@ export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, ma
 
   const layersRef = useRef({ seismic: null, volcanic: null, faults: null })
   const isDragging = useRef(false)
+  const shiftDragging = useRef(false)
+  const boxSelectLock = useRef(false)
+  const boxStart = useRef({ x: 0, y: 0 })
+  const justFinishedBoxSelect = useRef(false)
   const solidSphereRef = useRef(null)
   const frozen = useRef(false)
   const selectedPointRef = useRef(null)
@@ -234,14 +238,62 @@ ringGroup.add(ringHalo)
     globeGroup.add(faultsGroup)
     layersRef.current.faults = faultsGroup
 
-    // ── Mouse etkileşimi ───────────────────────────────────────────────
+    // ── MOUSE ETKİLEŞİMLERİ ───────────────────────────────────────────────
 
     // ── Raycaster — nokta tıklama tespiti ────────────────────────────────
     const raycaster = new THREE.Raycaster()
     const pointerNDC = new THREE.Vector2()
 
+
+    // ── Seçim kutusu içindeki noktaları bul (ekran koordinatlarına projekte ederek) ──
+    const getPointsInBox = (x1, y1, x2, y2) => {
+      const rect = renderer.domElement.getBoundingClientRect()
+      const minX = Math.min(x1, x2), maxX = Math.max(x1, x2)
+      const minY = Math.min(y1, y2), maxY = Math.max(y1, y2)
+
+      const found = []
+
+      const checkGroup = (layerGroup) => {
+        if (!layerGroup || !layerGroup.visible) return
+        layerGroup.children.forEach(pointGroup => {
+          if (!pointGroup.visible) return
+          const worldPos = new THREE.Vector3()
+          pointGroup.getWorldPosition(worldPos)
+
+          // Küre merkezi origin olduğu için: nokta kameraya bakan yarım kürede mi?
+          const dotVal = worldPos.dot(camera.position)
+          if (dotVal <= 0) return
+          if (worldPos.dot(camera.position) <= 0) return  // arka yüzde, gizli
+
+          const screenPos = worldPos.clone().project(camera)
+          if (screenPos.z > 1) return
+
+          const sx = (screenPos.x * 0.5 + 0.5) * rect.width
+          const sy = (-screenPos.y * 0.5 + 0.5) * rect.height
+
+          if (sx < minX || sx > maxX || sy < minY || sy > maxY) return
+
+          found.push({ ...pointGroup.userData, screenX: sx, screenY: sy })
+        })
+      }
+
+      checkGroup(layersRef.current.seismic)
+      checkGroup(layersRef.current.volcanic)
+
+      console.log('Box:', minX, minY, maxX, maxY)
+      console.log('Found:', found)
+      return found
+    }
+
     const onClick = e => {
       if (isDragging.current) return
+
+      if (justFinishedBoxSelect.current) {
+        justFinishedBoxSelect.current = false
+        return  // bu click, box-select'in doğal sonucu, görmezden gel
+      }
+      boxSelectLock.current = false   // ← eklendi
+      onSelectionBoxChange?.(null)
 
       const rect = renderer.domElement.getBoundingClientRect()
       pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
@@ -314,7 +366,19 @@ ringGroup.add(ringHalo)
 
     const onMouseDown = e => {
       if (frozen.current) return
+
+      if (e.button === 0 && e.shiftKey) {
+        if (autoRotate.current) return  // küre dönüyorsa seçim başlatılamaz
+
+        const rect = renderer.domElement.getBoundingClientRect()
+        shiftDragging.current = true
+        boxStart.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+        onSelectionBoxChange?.({ x1: boxStart.current.x, y1: boxStart.current.y, x2: boxStart.current.x, y2: boxStart.current.y })
+        return
+      }
+
       if (e.button === 0) {
+        if (boxSelectLock.current) return  // panel açıkken normal sürüklemeyi engelle
         isDragging.current = true
         prevMouse.current  = { x: e.clientX, y: e.clientY }
       }
@@ -323,11 +387,21 @@ ringGroup.add(ringHalo)
     const onContextMenu = e => {
       e.preventDefault()
       if (frozen.current) return
+      if (boxSelectLock.current) return
       autoRotate.current = !autoRotate.current
     }
 
     const onMouseMove = e => {
       if (frozen.current) return
+
+      if (shiftDragging.current) {
+        const rect = renderer.domElement.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        onSelectionBoxChange?.({ x1: boxStart.current.x, y1: boxStart.current.y, x2: x, y2: y })
+        return
+      }
+
       if (!isDragging.current) return
       const dx = e.clientX - prevMouse.current.x
       const dy = e.clientY - prevMouse.current.y
@@ -337,6 +411,19 @@ ringGroup.add(ringHalo)
     }
 
     const onMouseUp = e => {
+      if (shiftDragging.current) {
+        shiftDragging.current = false
+        justFinishedBoxSelect.current = true
+        boxSelectLock.current = true   // ← eklendi
+        const { x, y } = boxStart.current
+        const rect = renderer.domElement.getBoundingClientRect()
+        const endX = e.clientX - rect.left
+        const endY = e.clientY - rect.top
+
+        const points = getPointsInBox(x, y, endX, endY)
+        onSelectionBoxChange?.({ x1: x, y1: y, x2: endX, y2: endY, points })
+        return
+      }
       if (e.button === 0) isDragging.current = false
     }
 
@@ -344,6 +431,7 @@ ringGroup.add(ringHalo)
     const onWheel = e => {
       e.preventDefault()
       if (frozen.current) return
+      if (boxSelectLock.current) return   // ← eklendi
       camera.position.z = Math.max(1.5, Math.min(5.0,
         camera.position.z + e.deltaY * 0.003
       ))
