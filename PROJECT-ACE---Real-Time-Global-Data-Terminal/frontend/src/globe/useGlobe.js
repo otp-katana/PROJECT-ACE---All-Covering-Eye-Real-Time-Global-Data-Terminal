@@ -473,7 +473,7 @@ ringGroup.add(ringHalo)
     if (!group) return
 
     if (seismicLayers?.volcanic && group.children.length === 0) {
-      fetch('http://localhost:8000/api/omori/volcanoes')
+      fetch('http://localhost:8000/api/omori/volcanoes', { cache: 'no-store' })
         .then(r => r.json())
         .then(volcanoes => {
           volcanoes.forEach(v => {

@@ -30,10 +30,18 @@ export default function MainLayout() {
     let cancelled = false
 
     const fetchEvents = () => {
-      fetch('http://localhost:8000/api/omori/events')
+      fetch('http://localhost:8000/api/omori/events', { cache: 'no-store' })
         .then(r => r.json())
-        .then(data => { if (!cancelled) setSeismicEvents(data) })
-        .catch(err => console.error('USGS fetch failed:', err))
+        .then(data => {
+          if (!cancelled) {
+            setSeismicEvents(data)
+            setIsLive(true)
+          }
+        })
+        .catch(err => {
+          console.error('USGS fetch failed:', err)
+          if (!cancelled) setIsLive(false)
+        })
     }
 
     fetchEvents()
