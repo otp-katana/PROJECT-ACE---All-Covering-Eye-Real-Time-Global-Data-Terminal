@@ -33,6 +33,7 @@ export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, ma
   const isDragging = useRef(false)
   const solidSphereRef = useRef(null)
   const frozen = useRef(false)
+  const selectedPointRef = useRef(null)
   const prevMouse   = useRef({ x: 0, y: 0 })
 
 
@@ -271,8 +272,20 @@ ringGroup.add(ringHalo)
         while (obj && !obj.userData?.type) obj = obj.parent
 
         if (obj?.userData?.type) {
-          frozen.current = true
-          onPointClick?.(obj.userData)
+          const clicked = obj.userData
+          const prev = selectedPointRef.current
+
+          const isSamePoint = prev && prev.lat === clicked.lat && prev.lon === clicked.lon
+
+          if (isSamePoint) {
+            selectedPointRef.current = null
+            frozen.current = false
+            onPointClick?.(null)
+          } else {
+            selectedPointRef.current = clicked
+            frozen.current = true
+            onPointClick?.(clicked)
+          }
         }
       }
     }
@@ -418,7 +431,10 @@ ringGroup.add(ringHalo)
       const scale = q.mag / 5
 
       const pointGroup = new THREE.Group()
-      pointGroup.userData = { type: 'seismic', lat: q.lat, lon: q.lon, mag: q.mag, place: q.place }
+      pointGroup.userData = {
+        type: 'seismic', lat: q.lat, lon: q.lon, mag: q.mag, place: q.place,
+        depth: q.depth, time: q.time, updated: q.updated, felt: q.felt, tsunami: q.tsunami,
+      }
 
       const core = new THREE.Mesh(
         new THREE.SphereGeometry(0.012 * scale, 12, 12),
@@ -545,7 +561,10 @@ ringGroup.add(ringHalo)
     })
   }, [ringsVisible])
 
-  const unfreeze = () => { frozen.current = false }
+  const unfreeze = () => {
+  frozen.current = false
+  selectedPointRef.current = null
+  }
 
   // ── Magnitude filtresi — API'ye gitmeden sadece görünürlük ───────────
   useEffect(() => {

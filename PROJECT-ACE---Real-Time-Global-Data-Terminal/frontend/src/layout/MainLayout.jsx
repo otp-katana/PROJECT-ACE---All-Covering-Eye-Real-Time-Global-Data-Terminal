@@ -344,9 +344,36 @@ export default function MainLayout() {
 
           {/* İçerik */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {selectedPoint.place && (
+              <DetailRow label="LOCATION" value={selectedPoint.place} />
+            )}
             <DetailRow label="LATITUDE"  value={selectedPoint.lat.toFixed(2)} />
             <DetailRow label="LONGITUDE" value={selectedPoint.lon.toFixed(2)} />
             <DetailRow label="MAGNITUDE" value={`M${selectedPoint.mag.toFixed(1)}`} />
+
+            {selectedPoint.type === 'seismic' && (
+              <>
+                {selectedPoint.depth != null && (
+                  <DetailRow label="DEPTH" value={`${selectedPoint.depth.toFixed(1)} km`} />
+                )}
+                {selectedPoint.time && (
+                  <DetailRow label="TIME" value={new Date(Number(selectedPoint.time)).toLocaleString('tr-TR')} />
+                )}
+                {selectedPoint.felt != null && (
+                  <DetailRow label="FELT REPORTS" value={String(selectedPoint.felt)} />
+                )}
+                {selectedPoint.tsunami === 1 && (
+                  <DetailRow label="TSUNAMI RISK" value="YES" />
+                )}
+              </>
+            )}
+
+            {selectedPoint.type === 'volcanic' && selectedPoint.lastEruption != null && (
+              <DetailRow
+                label="LAST ERUPTION"
+                value={selectedPoint.lastEruption <= 0 ? `${Math.abs(selectedPoint.lastEruption)} BC` : `${selectedPoint.lastEruption} AD`}
+              />
+            )}
           </div>
 
         </aside>

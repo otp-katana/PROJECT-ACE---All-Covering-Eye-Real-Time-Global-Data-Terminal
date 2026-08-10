@@ -19,5 +19,9 @@ async def fetch_usgs_events() -> list[SeismicEvent]:
             mag=props.get("mag", 0.0),
             place=props.get("place"),
             time=str(props.get("time")),
+            depth=coords[2] if len(coords) > 2 else None,
+            updated=str(props.get("updated")) if props.get("updated") else None,
+            felt=props.get("felt"),
+            tsunami=props.get("tsunami"),
         ))
     return events
