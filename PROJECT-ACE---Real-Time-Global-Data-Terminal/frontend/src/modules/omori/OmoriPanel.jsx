@@ -213,7 +213,7 @@ function MagnitudeSlider({ value, onChange }) {
         fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
         color: 'rgba(0,0,0,0.55)', marginBottom: 6,
       }}>
-        <span>MIN MAGNITUDE</span>
+        <span>MAGNITUDE</span>
         <span>M{value.toFixed(1)}+</span>
       </div>
       <input
