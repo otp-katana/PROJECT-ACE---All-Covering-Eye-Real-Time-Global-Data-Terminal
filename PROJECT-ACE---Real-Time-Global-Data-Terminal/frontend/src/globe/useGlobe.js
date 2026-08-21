@@ -20,7 +20,8 @@ const MOCK_FAULTS = [
   ]},
 ]
 
-export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter, eruptionYearFilter, seismicEvents, onSelectionBoxChange) {
+export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter,
+eruptionYearFilter, seismicEvents, onSelectionBoxChange, focusRequest) {
   const sceneRef    = useRef(null)
   const cameraRef   = useRef(null)
   const rendererRef = useRef(null)
@@ -37,6 +38,10 @@ export function useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, ma
   const justFinishedBoxSelect = useRef(false)
   const solidSphereRef = useRef(null)
   const frozen = useRef(false)
+  const navigating = useRef(false)
+  const navigateTarget = useRef(null)
+  const pulseTarget = useRef(null)
+  const pulseStartTime = useRef(0)
   const selectedPointRef = useRef(null)
   const prevMouse   = useRef({ x: 0, y: 0 })
 
@@ -257,13 +262,12 @@ ringGroup.add(ringHalo)
         if (!layerGroup || !layerGroup.visible) return
         layerGroup.children.forEach(pointGroup => {
           if (!pointGroup.visible) return
-          const worldPos = new THREE.Vector3()
-          pointGroup.getWorldPosition(worldPos)
+          if (pointGroup.children.length === 0) return
 
-          // Küre merkezi origin olduğu için: nokta kameraya bakan yarım kürede mi?
-          const dotVal = worldPos.dot(camera.position)
-          if (dotVal <= 0) return
-          if (worldPos.dot(camera.position) <= 0) return  // arka yüzde, gizli
+          const worldPos = new THREE.Vector3()
+          pointGroup.children[0].getWorldPosition(worldPos)
+
+          if (worldPos.dot(camera.position) <= 0) return
 
           const screenPos = worldPos.clone().project(camera)
           if (screenPos.z > 1) return
@@ -280,8 +284,6 @@ ringGroup.add(ringHalo)
       checkGroup(layersRef.current.seismic)
       checkGroup(layersRef.current.volcanic)
 
-      console.log('Box:', minX, minY, maxX, maxY)
-      console.log('Found:', found)
       return found
     }
 
@@ -449,11 +451,49 @@ ringGroup.add(ringHalo)
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate)
 
-      if (autoRotate.current && !isDragging.current && !frozen.current) {
-      globeGroup.rotation.y += 0.0012
-    }
+      // ── Hedefe döndürme animasyonu ──
+      if (navigating.current && navigateTarget.current) {
+        const target = navigateTarget.current
+        globeGroup.quaternion.slerp(target.quaternion, 0.035)  // daha yavaş, daha yumuşak
 
-      // Halkalar kendi ekseni etrafında döner
+        const angleDiff = globeGroup.quaternion.angleTo(target.quaternion)
+        if (angleDiff < 0.01) {
+          globeGroup.quaternion.copy(target.quaternion)
+          navigating.current = false
+          autoRotate.current = false
+
+          pulseTarget.current = target.pointGroup
+          pulseStartTime.current = performance.now()
+        }
+      } else if (autoRotate.current && !isDragging.current && !frozen.current) {
+        globeGroup.rotation.y += 0.0012
+      }
+
+      // ── Pulse (kalp atışı) efekti ──
+      if (pulseTarget.current) {
+        const elapsed = performance.now() - pulseStartTime.current
+        const duration = 2500
+
+        if (elapsed > duration) {
+          pulseTarget.current.scale.set(1, 1, 1)
+          pulseTarget.current.children.forEach(mesh => {
+            mesh.material.opacity = mesh.userData.baseOpacity ?? mesh.material.opacity
+          })
+          pulseTarget.current = null
+        } else {
+          const pulse = (Math.sin(elapsed * 0.01) + 1) / 2  // 0-1 salınım, biraz daha yavaş
+          const scale = 1 + pulse * 0.9  // %90'a kadar büyüyüp küçülsün
+          pulseTarget.current.scale.set(scale, scale, scale)
+
+          pulseTarget.current.children.forEach(mesh => {
+            if (mesh.userData.baseOpacity == null) {
+              mesh.userData.baseOpacity = mesh.material.opacity
+            }
+            mesh.material.opacity = mesh.userData.baseOpacity + pulse * (1 - mesh.userData.baseOpacity)
+          })
+        }
+      }
+
       ringsRef.current.forEach(r => {
         r.group.rotation.y += r.speed
       })
@@ -682,6 +722,31 @@ ringGroup.add(ringHalo)
     const group = layersRef.current.seismic
     if (group) group.visible = !!seismicLayers?.seismic
   }, [seismicLayers?.seismic])
+
+  // ── Log'dan gelen focus isteğini işle ─────────────────────────────────
+  useEffect(() => {
+    if (!focusRequest) return
+
+    const { lat, lon, type } = focusRequest
+    const group = type === 'volcanic' ? layersRef.current.volcanic : layersRef.current.seismic
+    if (!group) return
+
+    const target = group.children.find(pg => pg.userData?.lat === lat && pg.userData?.lon === lon)
+    if (!target) return
+
+    const phi   = (90 - lat) * Math.PI / 180
+    const theta = (lon + 180) * Math.PI / 180
+    const localDir = new THREE.Vector3(
+      -Math.sin(phi) * Math.cos(theta),
+      Math.cos(phi),
+      Math.sin(phi) * Math.sin(theta)
+    ).normalize()
+
+    const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(localDir, new THREE.Vector3(0, 0, 1))
+
+    navigateTarget.current = { quaternion: targetQuaternion, pointGroup: target }
+    navigating.current = true
+  }, [focusRequest])
 
   return { sceneRef, globeRef, autoRotate, unfreeze }
 }

@@ -21,6 +21,7 @@ export default function MainLayout() {
   const [omoriToggles, setOmoriToggles] = useState({ seismic: true, faults: false, volcanic: false })
   const [ringsVisible, setRingsVisible] = useState(true)
   const [selectedPoint, setSelectedPoint] = useState(null)
+  const [focusRequest, setFocusRequest] = useState(null)
   const toggleOmori = id => setOmoriToggles(prev => ({ ...prev, [id]: !prev[id] }))
   const [seismicEvents, setSeismicEvents] = useState([])
   const [magnitudeFilter, setMagnitudeFilter] = useState(1.0)
@@ -80,6 +81,7 @@ export default function MainLayout() {
           magnitudeFilter={magnitudeFilter}
           eruptionYearFilter={eruptionYearFilter}
           seismicEvents={seismicEvents}
+          focusRequest={focusRequest}
         />
       </div>
 
@@ -291,6 +293,7 @@ export default function MainLayout() {
     onMagnitudeChange={setMagnitudeFilter}
     onEruptionYearChange={setEruptionYearFilter}
     seismicEvents={seismicEvents}
+    onFocusRequest={(point) => setFocusRequest({ ...point, _ts: Date.now() })}
   />
 )}
 
