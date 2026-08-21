@@ -454,7 +454,7 @@ ringGroup.add(ringHalo)
       // ── Hedefe döndürme animasyonu ──
       if (navigating.current && navigateTarget.current) {
         const target = navigateTarget.current
-        globeGroup.quaternion.slerp(target.quaternion, 0.035)  // daha yavaş, daha yumuşak
+        globeGroup.quaternion.slerp(target.quaternion, 0.035)
 
         const angleDiff = globeGroup.quaternion.angleTo(target.quaternion)
         if (angleDiff < 0.01) {
@@ -475,21 +475,24 @@ ringGroup.add(ringHalo)
         const duration = 2500
 
         if (elapsed > duration) {
-          pulseTarget.current.scale.set(1, 1, 1)
           pulseTarget.current.children.forEach(mesh => {
             mesh.material.opacity = mesh.userData.baseOpacity ?? mesh.material.opacity
+            mesh.material.depthTest = true
+            mesh.renderOrder = 0
           })
           pulseTarget.current = null
         } else {
-          const pulse = (Math.sin(elapsed * 0.01) + 1) / 2  // 0-1 salınım, biraz daha yavaş
-          const scale = 1 + pulse * 0.9  // %90'a kadar büyüyüp küçülsün
-          pulseTarget.current.scale.set(scale, scale, scale)
+          const pulse = (Math.sin(elapsed * 0.01) + 1) / 2
 
-          pulseTarget.current.children.forEach(mesh => {
+          pulseTarget.current.children.forEach((mesh, idx) => {
             if (mesh.userData.baseOpacity == null) {
               mesh.userData.baseOpacity = mesh.material.opacity
             }
-            mesh.material.opacity = mesh.userData.baseOpacity + pulse * (1 - mesh.userData.baseOpacity)
+            // Sadece halo'lar (idx > 0) güçlü pulse alsın, çekirdek (idx 0) sabit kalsın
+            const intensity = idx === 0 ? 0.3 : 1.0
+            mesh.material.opacity = mesh.userData.baseOpacity + pulse * (1 - mesh.userData.baseOpacity) * intensity
+            mesh.material.depthTest = false
+            mesh.renderOrder = 999
           })
         }
       }

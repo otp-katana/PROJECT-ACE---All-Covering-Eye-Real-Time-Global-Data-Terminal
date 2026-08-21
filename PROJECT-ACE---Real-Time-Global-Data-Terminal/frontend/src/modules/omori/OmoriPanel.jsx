@@ -47,7 +47,7 @@ export default function OmoriPanel({ toggles, onToggle, magnitudeFilter, onMagni
 eruptionYearFilter, onEruptionYearChange, seismicEvents, onFocusRequest }) {
   const [openCore, setOpenCore] = useState('core_dynamics')
   const [expandedItems, setExpandedItems] = useState({})
-  const [activeLogEntry, setActiveLogEntry] = useState(null)
+  const [hoveredLogEntry, setHoveredLogEntry] = useState(null)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -118,11 +118,9 @@ eruptionYearFilter, onEruptionYearChange, seismicEvents, onFocusRequest }) {
                       <MagnitudeSlider value={magnitudeFilter} onChange={onMagnitudeChange} />
                       <EventLog
                         events={seismicEvents?.filter(e => e.mag >= magnitudeFilter).sort((a, b) => Number(b.time) - Number(a.time))}
-                        onEventClick={(point) => {
-                          onFocusRequest?.(point)
-                          setActiveLogEntry(`${point.lat}-${point.lon}`)
-                        }}
-                        activeKey={activeLogEntry}
+                        onEventClick={onFocusRequest}
+                        hoveredKey={hoveredLogEntry}
+                        onHoverChange={setHoveredLogEntry}
                       />
                     </>
                   )}
@@ -266,7 +264,7 @@ function EruptionYearSlider({ value, onChange }) {
   )
 }
 
-function EventLog({ events, onEventClick, activeKey }) {
+function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
   return (
     <div style={{
       marginTop: 8,
@@ -283,21 +281,23 @@ function EventLog({ events, onEventClick, activeKey }) {
       )}
       {events?.map((e, i) => {
         const key = `${e.lat}-${e.lon}`
-        const isActive = key === activeKey
+        const isHovered = key === hoveredKey
         return (
           <div
             key={i}
             onClick={() => onEventClick?.({ lat: e.lat, lon: e.lon, type: 'seismic' })}
+            onMouseEnter={() => onHoverChange?.(key)}
+            onMouseLeave={() => onHoverChange?.(null)}
             style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '5px 4px',
               margin: '1px 0',
               borderRadius: 4,
-              background: isActive ? 'rgba(190,174,213,0.35)' : 'transparent',
+              background: isHovered ? 'rgba(190,174,213,0.35)' : 'transparent',
               borderBottom: i < events.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
               fontSize: 10.5,
               cursor: 'pointer',
-              transition: 'background 0.2s',
+              transition: 'background 0.15s',
             }}
           >
             <span style={{ color: '#000000', fontWeight: 700 }}>M{e.mag.toFixed(1)}</span>
