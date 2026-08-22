@@ -5,10 +5,10 @@ import OmoriPanel from '../modules/omori/OmoriPanel'
 const PROTOCOLS = [
   { id: 'OMORI',      label: 'OMORI',     sub: 'Seismic Activity'     },
   { id: 'LORENZ',     label: 'LORENZ',    sub: 'Atmospheric Events'   },
-  { id: 'HADLEY',     label: 'HADLEY',    sub: 'Logistics & Aviation'  },
-  { id: 'ARF',        label: 'ARF',       sub: 'Cyber Security'       },
-  { id: 'HERODOTUS',  label: 'HERODOTUS', sub: 'Geopolitics & OSINT'  },
-  { id: 'CLARKE',     label: 'CLARKE',    sub: 'Orbital & Satellite'  },
+  { id: '----------',     label: 'HADLEY',    sub: 'Logistics & Aviation'  },
+  { id: '----------',        label: 'ARF',       sub: 'Cyber Security'       },
+  { id: '----------',  label: 'HERODOTUS', sub: 'Geopolitics & OSINT'  },
+  { id: '----------',     label: 'CLARKE',    sub: 'Orbital & Satellite'  },
 ]
 
 const NAV_H    = 64
@@ -20,12 +20,14 @@ export default function MainLayout() {
   const [isLive, setIsLive] = useState(true)
   const [omoriToggles, setOmoriToggles] = useState({ seismic: true, faults: false, volcanic: false })
   const [ringsVisible, setRingsVisible] = useState(true)
+  const [resetCounter, setResetCounter] = useState(0)
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [focusRequest, setFocusRequest] = useState(null)
   const toggleOmori = id => setOmoriToggles(prev => ({ ...prev, [id]: !prev[id] }))
   const [seismicEvents, setSeismicEvents] = useState([])
   const [magnitudeFilter, setMagnitudeFilter] = useState(1.0)
   const [eruptionYearFilter, setEruptionYearFilter] = useState(-10000)
+  
 
   useEffect(() => {
     let cancelled = false
@@ -82,6 +84,7 @@ export default function MainLayout() {
           eruptionYearFilter={eruptionYearFilter}
           seismicEvents={seismicEvents}
           focusRequest={focusRequest}
+          resetTrigger={resetCounter}
         />
       </div>
 
@@ -133,6 +136,25 @@ export default function MainLayout() {
 >
   ◈
 </button>
+
+<button
+  onClick={() => setResetCounter(c => c + 1)}
+  title="Reset View"
+  style={{
+    background: 'transparent',
+    border: '1px solid rgba(190,174,213,0.5)',
+    borderRadius: 4,
+    color: '#000000',
+    fontSize: 14,
+    cursor: 'pointer',
+    padding: '4px 8px',
+    display: 'flex',
+    alignItems: 'center',
+  }}
+>
+  ⟲
+</button>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button style={{
     background: 'transparent', border: 'none',

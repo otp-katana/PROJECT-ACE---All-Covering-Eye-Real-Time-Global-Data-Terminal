@@ -2,15 +2,19 @@ import { useRef, useEffect, useState } from 'react'
 import { useGlobe } from './useGlobe'
 
 export default function Globe({ seismicLayers, ringsVisible, onPointClick, unfreezeSignal, magnitudeFilter,
-eruptionYearFilter, seismicEvents, focusRequest }) {
+eruptionYearFilter, seismicEvents, focusRequest, resetTrigger  }) {
   const mountRef = useRef(null)
   const [selectionBox, setSelectionBox] = useState(null)
-  const { unfreeze } = useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter,
+  const { unfreeze, resetView } = useGlobe(mountRef, seismicLayers, ringsVisible, onPointClick, magnitudeFilter,
   eruptionYearFilter, seismicEvents, setSelectionBox, focusRequest)
 
   useEffect(() => {
     if (unfreezeSignal) unfreeze()
   }, [unfreezeSignal])
+
+  useEffect(() => {
+    if (resetTrigger) resetView()
+  }, [resetTrigger])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
@@ -78,25 +82,38 @@ function resolveOverlapsVariable(positions, iterations = 30) {
 }
 
 function SelectionPanel({ box, onPointClick }) {
-  const panelLeft = Math.max(box.x1, box.x2) + 10
-  const panelTop  = Math.min(box.y1, box.y2)
+  const panelW = 160
+  const panelH = 160
+  const margin = 10
 
   const minX = Math.min(box.x1, box.x2), maxX = Math.max(box.x1, box.x2)
   const minY = Math.min(box.y1, box.y2), maxY = Math.max(box.y1, box.y2)
   const boxW = Math.max(maxX - minX, 1)
   const boxH = Math.max(maxY - minY, 1)
 
-  const panelW = 160
-  const panelH = 160
+  let panelLeft = maxX + margin
+  let panelTop  = minY
+
+  if (panelLeft + panelW > window.innerWidth) {
+    panelLeft = minX - panelW - margin
+  }
+  if (panelTop + panelH > window.innerHeight) {
+    panelTop = window.innerHeight - panelH - margin
+  }
+  if (panelTop < margin) {
+    panelTop = margin
+  }
+  if (panelLeft < margin) {
+    panelLeft = margin
+  }
+
   const basePointSize = 20
-  const minDist = basePointSize + 6
 
   const getPointSize = (mag) => {
     const scale = (mag ?? 3) / 5
     return Math.max(12, Math.min(36, basePointSize * scale))
-}
+  }
 
-  // Göreli konumları panel piksel uzayına taşı
   const rawPositions = box.points.map(p => ({
     x: ((p.screenX - minX) / boxW) * panelW,
     y: ((p.screenY - minY) / boxH) * panelH,
@@ -104,7 +121,7 @@ function SelectionPanel({ box, onPointClick }) {
     size: getPointSize(p.mag),
   }))
 
-const resolved = resolveOverlapsVariable(rawPositions)
+  const resolved = resolveOverlapsVariable(rawPositions)
 
   return (
     <div style={{

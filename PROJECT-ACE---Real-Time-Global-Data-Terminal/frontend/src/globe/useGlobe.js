@@ -41,6 +41,11 @@ eruptionYearFilter, seismicEvents, onSelectionBoxChange, focusRequest) {
   const navigating = useRef(false)
   const navigateTarget = useRef(null)
   const pulseTarget = useRef(null)
+  const globeGlowRef = useRef(null)
+  const wireSphereRef = useRef(null)
+  const continentLineMatRef = useRef(null)
+  const breathStartTime = useRef(0)
+  const breathing = useRef(false)
   const pulseStartTime = useRef(0)
   const selectedPointRef = useRef(null)
   const prevMouse   = useRef({ x: 0, y: 0 })
@@ -84,7 +89,7 @@ eruptionYearFilter, seismicEvents, onSelectionBoxChange, focusRequest) {
     solidSphereRef.current = solidSphere
 
     // ── Tel kafes küre ─────────────────────────────────────────────────
-    globeGroup.add(new THREE.Mesh(
+    const wireSphere = new THREE.Mesh(
       new THREE.SphereGeometry(1, 48, 48),
       new THREE.MeshBasicMaterial({
         color:       0xCCC8D8,
@@ -92,24 +97,29 @@ eruptionYearFilter, seismicEvents, onSelectionBoxChange, focusRequest) {
         transparent: true,
         opacity:     0.18,
       })
-    ))
+    )
+    globeGroup.add(wireSphere)
+    wireSphereRef.current = wireSphere
 
     // ── Glow ───────────────────────────────────────────────────────────
-    scene.add(new THREE.Mesh(
+    const globeGlow = new THREE.Mesh(
       new THREE.SphereGeometry(1.08, 48, 48),
       new THREE.MeshBasicMaterial({
         color: 0xBEAED5, transparent: true, opacity: 0.04, side: THREE.BackSide
       })
-    ))
+    )
+    scene.add(globeGlow)
+    globeGlowRef.current = globeGlow
 
     // ── Kıtalar ────────────────────────────────────────────────────────
     fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
       .then(r => r.json())
       .then(world => {
         const countries = feature(world, world.objects.countries)
-        const lineMat   = new THREE.LineBasicMaterial({
+        const lineMat = new THREE.LineBasicMaterial({
           color: 0xE8D5EF, transparent: true, opacity: 0.6
         })
+        continentLineMatRef.current = lineMat
 
         const processRing = ring => {
           const points = ring.map(([lon, lat]) => {
@@ -405,11 +415,11 @@ ringGroup.add(ringHalo)
       }
 
       if (!isDragging.current) return
-      const dx = e.clientX - prevMouse.current.x
-      const dy = e.clientY - prevMouse.current.y
-      globeGroup.rotation.x += dy * 0.007
-      globeGroup.rotation.y += dx * 0.007
-      prevMouse.current = { x: e.clientX, y: e.clientY }
+        const dx = e.clientX - prevMouse.current.x
+        const dy = e.clientY - prevMouse.current.y
+        globeGroup.rotation.x += dy * 0.007
+        globeGroup.rotation.y += dx * 0.007
+        prevMouse.current = { x: e.clientX, y: e.clientY }
     }
 
     const onMouseUp = e => {
@@ -454,17 +464,51 @@ ringGroup.add(ringHalo)
       // ── Hedefe döndürme animasyonu ──
       if (navigating.current && navigateTarget.current) {
         const target = navigateTarget.current
-        globeGroup.quaternion.slerp(target.quaternion, 0.035)
+        const dx = target.y - globeGroup.rotation.y
+        const dz = target.x - globeGroup.rotation.x
 
-        const angleDiff = globeGroup.quaternion.angleTo(target.quaternion)
-        if (angleDiff < 0.01) {
-          globeGroup.quaternion.copy(target.quaternion)
-          navigating.current = false
-          autoRotate.current = false
+        globeGroup.rotation.y += dx * 0.08
+        globeGroup.rotation.x += dz * 0.08
 
-          pulseTarget.current = target.pointGroup
-          pulseStartTime.current = performance.now()
+        // Kamera mesafesini de hedefe yumuşakça taşı (varsa)
+        if (target.z != null) {
+          const dCam = target.z - camera.position.z
+          camera.position.z += dCam * 0.08
         }
+
+        const zoomDone = target.z == null || Math.abs(target.z - camera.position.z) < 0.02
+
+        if (Math.abs(dx) < 0.005 && Math.abs(dz) < 0.005) {
+          globeGroup.rotation.y = target.y
+          globeGroup.rotation.x = target.x
+          navigating.current = false
+
+          if (target.pointGroup || target.triggerBreath) {
+            breathing.current = true
+            breathStartTime.current = performance.now()
+          }
+
+          if (target.triggerBreath) {
+            autoRotate.current = false  // breath bitene kadar dönme
+          }
+
+          if (target.pointGroup) {
+            if (pulseTarget.current && pulseTarget.current !== target.pointGroup) {
+              pulseTarget.current.children.forEach(mesh => {
+                mesh.material.opacity = mesh.userData.baseOpacity ?? mesh.material.opacity
+                if (mesh.userData.baseColor != null) {
+                  mesh.material.color.setHex(mesh.userData.baseColor)
+                }
+                mesh.material.depthTest = true
+                mesh.renderOrder = 0
+              })
+            }
+            autoRotate.current = false
+            pulseTarget.current = target.pointGroup
+            pulseStartTime.current = performance.now()
+          }
+        }
+
       } else if (autoRotate.current && !isDragging.current && !frozen.current) {
         globeGroup.rotation.y += 0.0012
       }
@@ -477,23 +521,90 @@ ringGroup.add(ringHalo)
         if (elapsed > duration) {
           pulseTarget.current.children.forEach(mesh => {
             mesh.material.opacity = mesh.userData.baseOpacity ?? mesh.material.opacity
+            if (mesh.userData.baseColor != null) {
+              mesh.material.color.setHex(mesh.userData.baseColor)
+            }
             mesh.material.depthTest = true
             mesh.renderOrder = 0
           })
           pulseTarget.current = null
         } else {
           const pulse = (Math.sin(elapsed * 0.01) + 1) / 2
+          const pulseColor = new THREE.Color(0xFFD24D)  // parlak sarı/amber
 
           pulseTarget.current.children.forEach((mesh, idx) => {
             if (mesh.userData.baseOpacity == null) {
               mesh.userData.baseOpacity = mesh.material.opacity
             }
-            // Sadece halo'lar (idx > 0) güçlü pulse alsın, çekirdek (idx 0) sabit kalsın
+            if (mesh.userData.baseColor == null) {
+              mesh.userData.baseColor = mesh.material.color.getHex()
+            }
+
             const intensity = idx === 0 ? 0.3 : 1.0
             mesh.material.opacity = mesh.userData.baseOpacity + pulse * (1 - mesh.userData.baseOpacity) * intensity
+            mesh.material.color.copy(new THREE.Color(mesh.userData.baseColor)).lerp(pulseColor, pulse * intensity)
+
             mesh.material.depthTest = false
             mesh.renderOrder = 999
           })
+        }
+      }
+
+      // ── Küre "nefes alma" efekti (tel kafes + halo, halo gecikmeli) ──
+      if (breathing.current && wireSphereRef.current) {
+        const elapsed = performance.now() - breathStartTime.current
+        const duration = 500
+        const haloDelay = 60
+        const totalDuration = duration + haloDelay  // halo bitene kadar toplam süre
+        const baseColor = 0xCCC8D8
+        const breathColor = 0xE8D5EF
+
+        // Tel kafes küre
+        if (elapsed > duration) {
+          wireSphereRef.current.material.color.setHex(baseColor)
+          wireSphereRef.current.material.opacity = 0.18
+        } else {
+          const t = elapsed / duration
+          const wave = Math.sin(t * Math.PI)
+          wireSphereRef.current.material.color.copy(new THREE.Color(baseColor)).lerp(new THREE.Color(breathColor), wave)
+          wireSphereRef.current.material.opacity = 0.18 + wave * 0.35
+        }
+        
+        // Kıta çizgileri, wireSphere ile aynı zamanlama
+        if (continentLineMatRef.current) {
+          if (elapsed > duration) {
+            continentLineMatRef.current.color.setHex(0xE8D5EF)
+            continentLineMatRef.current.opacity = 0.6
+          } else {
+            const t = elapsed / duration
+            const wave = Math.sin(t * Math.PI)
+            continentLineMatRef.current.color.copy(new THREE.Color(0xE8D5EF)).lerp(new THREE.Color(0xFFFFFF), wave * 0.5)
+            continentLineMatRef.current.opacity = 0.6 + wave * 0.3
+          }
+        }
+
+        // Halo, gecikmeli başlayıp aynı süre boyunca oynasın
+        if (globeGlowRef.current) {
+          const haloElapsed = elapsed - haloDelay
+          if (haloElapsed >= 0 && haloElapsed <= duration) {
+            const haloT = haloElapsed / duration
+            const haloWave = Math.sin(haloT * Math.PI)
+            globeGlowRef.current.material.opacity = 0.04 + haloWave * 0.12
+          } else if (haloElapsed > duration) {
+            globeGlowRef.current.material.opacity = 0.04
+          }
+        }
+
+        // Her ikisi de tamamlanınca breathing'i kapat
+        if (elapsed > totalDuration) {
+          breathing.current = false
+
+          if (pulseTarget.current == null) {
+            // Bu bir reset breath'iydi (nokta odaklı değil) — 60ms sonra dönüşü başlat
+            setTimeout(() => {
+              autoRotate.current = true
+            }, 15)
+          }
         }
       }
 
@@ -693,8 +804,15 @@ ringGroup.add(ringHalo)
   }, [ringsVisible])
 
   const unfreeze = () => {
-  frozen.current = false
-  selectedPointRef.current = null
+    frozen.current = false
+    selectedPointRef.current = null
+  }
+
+  const resetView = () => {
+    navigating.current = false
+    pulseTarget.current = null
+    navigateTarget.current = { y: 0, x: 0, pointGroup: null, triggerBreath: true }
+    navigating.current = true
   }
 
   // ── Magnitude filtresi — API'ye gitmeden sadece görünürlük ───────────
@@ -737,19 +855,21 @@ ringGroup.add(ringHalo)
     const target = group.children.find(pg => pg.userData?.lat === lat && pg.userData?.lon === lon)
     if (!target) return
 
-    const phi   = (90 - lat) * Math.PI / 180
-    const theta = (lon + 180) * Math.PI / 180
-    const localDir = new THREE.Vector3(
-      -Math.sin(phi) * Math.cos(theta),
-      Math.cos(phi),
-      Math.sin(phi) * Math.sin(theta)
-    ).normalize()
+    const targetLon = -lon - 90
+    const targetRotY = THREE.MathUtils.degToRad(targetLon)
+    const targetRotX = THREE.MathUtils.degToRad(lat) * 0.6
 
-    const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(localDir, new THREE.Vector3(0, 0, 1))
+    const safeZoomMin = 2.2  // bu kadar yakınsa geri çek
+    const safeZoomMax = 3.6  // bu kadar uzaksa yaklaştır
+    const currentZoom = cameraRef.current.position.z
 
-    navigateTarget.current = { quaternion: targetQuaternion, pointGroup: target }
+    let targetZoom = currentZoom
+    if (currentZoom < safeZoomMin) targetZoom = safeZoomMin
+    if (currentZoom > safeZoomMax) targetZoom = safeZoomMax
+
+    navigateTarget.current = { y: targetRotY, x: targetRotX, z: targetZoom, pointGroup: target }
     navigating.current = true
   }, [focusRequest])
 
-  return { sceneRef, globeRef, autoRotate, unfreeze }
+  return { sceneRef, globeRef, autoRotate, unfreeze, resetView }
 }
