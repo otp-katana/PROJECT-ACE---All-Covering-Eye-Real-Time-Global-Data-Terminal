@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 const CORES = [
   {
@@ -35,61 +35,72 @@ const CORES = [
       { id: 'classify',    label: 'Öncü/Artçı Olasılık Sınıflandırması', active: false },
     ],
   },
-]
+];
 
 const CORE_ICONS = {
-  core_dynamics: '◉',
-  post_event:    '◈',
-  cassandra_ai:  '✦',
-}
+  core_dynamics: "◉",
+  post_event: "◈",
+  cassandra_ai: "✦",
+};
 
-export default function OmoriPanel({ toggles, onToggle, magnitudeFilter, onMagnitudeChange,
-eruptionYearFilter, onEruptionYearChange, seismicEvents, onFocusRequest }) {
-  const [openCore, setOpenCore] = useState('core_dynamics')
-  const [expandedItems, setExpandedItems] = useState({})
-  const [hoveredLogEntry, setHoveredLogEntry] = useState(null)
+export default function OmoriPanel({
+  toggles,
+  onToggle,
+  magnitudeFilter,
+  onMagnitudeChange,
+  eruptionYearFilter,
+  onEruptionYearChange,
+  seismicEvents,
+  onFocusRequest,
+}) {
+  const [openCore, setOpenCore] = useState("core_dynamics");
+  const [expandedItems, setExpandedItems] = useState({});
+  const [hoveredLogEntry, setHoveredLogEntry] = useState(null);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* ── CORE ICONS — TOP ROW ── */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-        {CORES.map(core => (
+      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        {CORES.map((core) => (
           <button
             key={core.id}
             onClick={() => setOpenCore(openCore === core.id ? null : core.id)}
             style={{
-              flex:          1,
-              padding:       '10px 4px',
-              borderRadius:  10,
-              cursor:        'pointer',
-              border:        openCore === core.id
-                ? '1px solid rgba(190,174,213,0.5)'
-                : '1px solid rgba(0,0,0,0.08)',
-              background:    openCore === core.id
-                ? 'rgba(190,174,213,0.22)'
-                : 'transparent',
-              display:       'flex',
-              flexDirection: 'column',
-              alignItems:    'center',
-              gap:           4,
-              transition:    'all 0.15s',
+              flex: 1,
+              padding: "10px 4px",
+              borderRadius: 10,
+              cursor: "pointer",
+              border:
+                openCore === core.id
+                  ? "1px solid rgba(190,174,213,0.5)"
+                  : "1px solid rgba(0,0,0,0.08)",
+              background:
+                openCore === core.id ? "rgba(190,174,213,0.22)" : "transparent",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+              transition: "all 0.15s",
             }}
           >
-            <span style={{
-              fontSize: 16,
-              color: core.active ? '#000000' : 'rgba(0,0,0,0.3)',
-            }}>
+            <span
+              style={{
+                fontSize: 16,
+                color: core.active ? "#000000" : "rgba(0,0,0,0.3)",
+              }}
+            >
               {CORE_ICONS[core.id]}
             </span>
-            <span style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              color: core.active ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)',
-              textAlign: 'center',
-              lineHeight: 1.2,
-            }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                color: core.active ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)",
+                textAlign: "center",
+                lineHeight: 1.2,
+              }}
+            >
               {core.label}
             </span>
           </button>
@@ -97,11 +108,15 @@ eruptionYearFilter, onEruptionYearChange, seismicEvents, onFocusRequest }) {
       </div>
 
       {/* ── CORE, SUB-CONTENTS ── */}
-      <div style={{ flex: 1, overflowY: 'visible' }}>
-        {CORES.filter(c => c.id === openCore).map(core => (
-          <div key={core.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {core.items.map(item => {
-              const isExpandable = item.id === 'seismic' || item.id === 'volcanic'
+      <div style={{ flex: 1, overflowY: "visible" }}>
+        {CORES.filter((c) => c.id === openCore).map((core) => (
+          <div
+            key={core.id}
+            style={{ display: "flex", flexDirection: "column", gap: 10 }}
+          >
+            {core.items.map((item) => {
+              const isExpandable =
+                item.id === "seismic" || item.id === "volcanic";
               return (
                 <div key={item.id}>
                   <ToggleRow
@@ -109,70 +124,97 @@ eruptionYearFilter, onEruptionYearChange, seismicEvents, onFocusRequest }) {
                     enabled={item.active ? (toggles[item.id] ?? false) : false}
                     disabled={!item.active}
                     onClick={() => item.active && onToggle(item.id)}
-                    onLabelClick={() => isExpandable && setExpandedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                    onLabelClick={() =>
+                      isExpandable &&
+                      setExpandedItems((prev) => ({
+                        ...prev,
+                        [item.id]: !prev[item.id],
+                      }))
+                    }
                     expandable={isExpandable}
                     expanded={!!expandedItems[item.id]}
                   />
-                  {item.id === 'seismic' && expandedItems.seismic && (
+                  {item.id === "seismic" && expandedItems.seismic && (
                     <>
-                      <MagnitudeSlider value={magnitudeFilter} onChange={onMagnitudeChange} />
+                      <MagnitudeSlider
+                        value={magnitudeFilter}
+                        onChange={onMagnitudeChange}
+                      />
                       <EventLog
-                        events={seismicEvents?.filter(e => e.mag >= magnitudeFilter).sort((a, b) => Number(b.time) - Number(a.time))}
+                        events={seismicEvents
+                          ?.filter((e) => e.mag >= magnitudeFilter)
+                          .sort((a, b) => Number(b.time) - Number(a.time))}
                         onEventClick={onFocusRequest}
                         hoveredKey={hoveredLogEntry}
                         onHoverChange={setHoveredLogEntry}
                       />
                     </>
                   )}
-                  {item.id === 'volcanic' && expandedItems.volcanic && (
-                    <EruptionYearSlider value={eruptionYearFilter} onChange={onEruptionYearChange} />
+                  {item.id === "volcanic" && expandedItems.volcanic && (
+                    <EruptionYearSlider
+                      value={eruptionYearFilter}
+                      onChange={onEruptionYearChange}
+                    />
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         ))}
       </div>
-
     </div>
-  )
+  );
 }
 
-function ToggleRow({ label, enabled, disabled, onClick, onLabelClick, expandable, expanded }) {
+function ToggleRow({
+  label,
+  enabled,
+  disabled,
+  onClick,
+  onLabelClick,
+  expandable,
+  expanded,
+}) {
   return (
-    <div style={{
-      display:        'flex',
-      alignItems:     'center',
-      justifyContent: 'space-between',
-      opacity:        disabled ? 0.35 : 1,
-    }}>
-        <div
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        opacity: disabled ? 0.35 : 1,
+      }}
+    >
+      <div
         onClick={expandable ? onLabelClick : undefined}
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 6,
-          cursor: expandable ? 'pointer' : 'default',
+          cursor: expandable ? "pointer" : "default",
           flex: 1,
         }}
       >
-        <span style={{
-          fontSize: 13.5,
-          fontWeight: 700,
-          letterSpacing: '0.03em',
-          color:    '#ffffff',
-          lineHeight: 1.4,
-        }}>
+        <span
+          style={{
+            fontSize: 13.5,
+            fontWeight: 700,
+            letterSpacing: "0.03em",
+            color: "#ffffff",
+            lineHeight: 1.4,
+          }}
+        >
           {label}
         </span>
         {expandable && (
-          <span style={{
-            fontSize: 10,
-            color: 'rgba(255, 255, 255, 0.64)',
-            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            display: 'inline-block',
-          }}>
+          <span
+            style={{
+              fontSize: 10,
+              color: "rgba(255, 255, 255, 0.64)",
+              transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+              transition: "transform 0.2s",
+              display: "inline-block",
+            }}
+          >
             ▶
           </span>
         )}
@@ -182,44 +224,54 @@ function ToggleRow({ label, enabled, disabled, onClick, onLabelClick, expandable
         onClick={onClick}
         disabled={disabled}
         style={{
-          width:        34,
-          height:       18,
+          width: 34,
+          height: 18,
           borderRadius: 10,
-          border:       'none',
-          padding:      2,
-          flexShrink:   0,
-          cursor:       disabled ? 'not-allowed' : 'pointer',
-          background:   enabled ? 'rgba(80, 60, 120, 0.85)' : 'rgba(0,0,0,0.15)',
-          display:      'flex',
-          alignItems:   'center',
-          justifyContent: enabled ? 'flex-end' : 'flex-start',
-          transition:   'background 0.2s',
+          border: "none",
+          padding: 2,
+          flexShrink: 0,
+          cursor: disabled ? "not-allowed" : "pointer",
+          background: enabled ? "rgba(80, 60, 120, 0.85)" : "rgba(0,0,0,0.15)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: enabled ? "flex-end" : "flex-start",
+          transition: "background 0.2s",
         }}
       >
-        <span style={{
-          width:        14,
-          height:       14,
-          borderRadius: '50%',
-          background:   '#FFFFFF',
-          display:      'block',
-          boxShadow:    '0 1px 2px rgba(0,0,0,0.3)',
-        }} />
+        <span
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            background: "#FFFFFF",
+            display: "block",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+          }}
+        />
       </button>
     </div>
-  )
+  );
 }
 
 function MagnitudeSlider({ value, onChange }) {
   return (
-    <div style={{
-      padding: '10px 4px 4px',
-      marginBottom: 4,
-    }}>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-        color: 'rgba(0,0,0,0.55)', marginBottom: 6,
-      }}>
+    <div
+      style={{
+        padding: "10px 4px 4px",
+        marginBottom: 4,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          color: "rgba(0,0,0,0.55)",
+          marginBottom: 6,
+        }}
+      >
         <span>MAGNITUDE</span>
         <span>M{value.toFixed(1)}+</span>
       </div>
@@ -229,27 +281,35 @@ function MagnitudeSlider({ value, onChange }) {
         max="7.0"
         step="0.1"
         value={value}
-        onChange={e => onChange(+e.target.value)}
-        style={{ width: '100%', accentColor: 'rgba(80,60,120,0.85)' }}
+        onChange={(e) => onChange(+e.target.value)}
+        style={{ width: "100%", accentColor: "rgba(80,60,120,0.85)" }}
       />
     </div>
-  )
+  );
 }
 
 function EruptionYearSlider({ value, onChange }) {
-  const label = value <= 0 ? `MÖ ${Math.abs(value)}` : `MS ${value}`
+  const label = value <= 0 ? `MÖ ${Math.abs(value)}` : `MS ${value}`;
   return (
-    <div style={{
-      padding: '10px 4px 4px',
-      marginBottom: 4,
-    }}>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-        color: 'rgba(0,0,0,0.55)', marginBottom: 6,
-      }}>
+    <div
+      style={{
+        padding: "10px 4px 4px",
+        marginBottom: 4,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          color: "rgba(0,0,0,0.55)",
+          marginBottom: 6,
+        }}
+      >
         <span>LAST ACTIVITY</span>
-        <span>{value <= -10000 ? 'TÜMÜ' : `${label}+`}</span>
+        <span>{value <= -10000 ? "TÜMÜ" : `${label}+`}</span>
       </div>
       <input
         type="range"
@@ -257,70 +317,94 @@ function EruptionYearSlider({ value, onChange }) {
         max="2026"
         step="10"
         value={value}
-        onChange={e => onChange(+e.target.value)}
-        style={{ width: '100%', accentColor: 'rgba(80,60,120,0.85)' }}
+        onChange={(e) => onChange(+e.target.value)}
+        style={{ width: "100%", accentColor: "rgba(80,60,120,0.85)" }}
       />
     </div>
-  )
+  );
 }
 
 function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
   return (
-    <div style={{
-      marginTop: 8,
-      maxHeight: 140,
-      overflowY: 'auto',
-      border: '1px solid rgba(0,0,0,0.08)',
-      borderRadius: 8,
-      padding: '6px 8px',
-    }}>
+    <div
+      style={{
+        marginTop: 8,
+        maxHeight: 140,
+        overflowY: "auto",
+        border: "1px solid rgba(0,0,0,0.08)",
+        borderRadius: 8,
+        padding: "6px 8px",
+      }}
+    >
       {(!events || events.length === 0) && (
-        <div style={{ fontSize: 10, color: 'rgba(0,0,0,0.35)', padding: '4px 2px' }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: "rgba(0,0,0,0.35)",
+            padding: "4px 2px",
+          }}
+        >
           Veri bekleniyor...
         </div>
       )}
       {events?.map((e, i) => {
-        const key = `${e.lat}-${e.lon}`
-        const isHovered = key === hoveredKey
+        const key = `${e.lat}-${e.lon}`;
+        const isHovered = key === hoveredKey;
         return (
           <div
             key={i}
-            onClick={() => onEventClick?.({ lat: e.lat, lon: e.lon, type: 'seismic' })}
+            onClick={() =>
+              onEventClick?.({ lat: e.lat, lon: e.lon, type: "seismic" })
+            }
             onMouseEnter={() => onHoverChange?.(key)}
             onMouseLeave={() => onHoverChange?.(null)}
             style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '5px 4px',
-              margin: '1px 0',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "5px 4px",
+              margin: "1px 0",
               borderRadius: 4,
-              background: isHovered ? 'rgba(190,174,213,0.35)' : 'transparent',
-              borderBottom: i < events.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+              background: isHovered ? "rgba(190,174,213,0.35)" : "transparent",
+              borderBottom:
+                i < events.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
               fontSize: 10.5,
-              cursor: 'pointer',
-              transition: 'background 0.15s',
+              cursor: "pointer",
+              transition: "background 0.15s",
             }}
           >
-            <span style={{ color: '#000000', fontWeight: 700 }}>M{e.mag.toFixed(1)}</span>
-            <span style={{ color: 'rgba(0,0,0,0.6)', flex: 1, margin: '0 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {e.place || 'Bilinmeyen konum'}
+            <span style={{ color: "#000000", fontWeight: 700 }}>
+              M{e.mag.toFixed(1)}
             </span>
-            <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 9 }}>
+            <span
+              style={{
+                color: "rgba(0,0,0,0.6)",
+                flex: 1,
+                margin: "0 8px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {e.place || "Bilinmeyen konum"}
+            </span>
+            <span style={{ color: "rgba(0,0,0,0.4)", fontSize: 9 }}>
               {timeAgo(e.time)}
             </span>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 function timeAgo(timeStr) {
-  if (!timeStr) return ''
-  const diffMs = Date.now() - Number(timeStr)
-  const mins = Math.floor(diffMs / 60000)
-  if (mins < 1) return 'şimdi'
-  if (mins < 60) return `${mins} dk önce`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} sa önce`
-  return `${Math.floor(hours / 24)} gün önce`
+  if (!timeStr) return "";
+  const diffMs = Date.now() - Number(timeStr);
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "şimdi";
+  if (mins < 60) return `${mins} dk önce`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} sa önce`;
+  return `${Math.floor(hours / 24)} gün önce`;
 }

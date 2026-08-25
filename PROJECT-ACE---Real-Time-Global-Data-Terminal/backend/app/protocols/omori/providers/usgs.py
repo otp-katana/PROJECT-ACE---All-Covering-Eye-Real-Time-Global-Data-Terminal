@@ -1,7 +1,9 @@
 import httpx
+
 from app.protocols.omori.schemas import SeismicEvent
 
 USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
+
 
 async def fetch_usgs_events() -> list[SeismicEvent]:
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -13,15 +15,17 @@ async def fetch_usgs_events() -> list[SeismicEvent]:
     for feature in data.get("features", []):
         coords = feature["geometry"]["coordinates"]  # [lon, lat, depth]
         props = feature["properties"]
-        events.append(SeismicEvent(
-            lat=coords[1],
-            lon=coords[0],
-            mag=props.get("mag", 0.0),
-            place=props.get("place"),
-            time=str(props.get("time")),
-            depth=coords[2] if len(coords) > 2 else None,
-            updated=str(props.get("updated")) if props.get("updated") else None,
-            felt=props.get("felt"),
-            tsunami=props.get("tsunami"),
-        ))
+        events.append(
+            SeismicEvent(
+                lat=coords[1],
+                lon=coords[0],
+                mag=props.get("mag", 0.0),
+                place=props.get("place"),
+                time=str(props.get("time")),
+                depth=coords[2] if len(coords) > 2 else None,
+                updated=str(props.get("updated")) if props.get("updated") else None,
+                felt=props.get("felt"),
+                tsunami=props.get("tsunami"),
+            )
+        )
     return events

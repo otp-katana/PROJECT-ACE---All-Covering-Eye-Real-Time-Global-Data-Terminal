@@ -1,4 +1,5 @@
 import httpx
+
 from app.protocols.omori.schemas import SeismicEvent
 
 GVP_URL = (
@@ -7,6 +8,7 @@ GVP_URL = (
     "&typeName=GVP-VOTW:E3WebApp_HoloceneVolcanoes"
     "&outputFormat=application/json"
 )
+
 
 async def fetch_gvp_volcanoes() -> list[SeismicEvent]:
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -25,12 +27,14 @@ async def fetch_gvp_volcanoes() -> list[SeismicEvent]:
             continue  # bozuk koordinatı atla
 
         props = feature.get("properties", {})
-        volcanoes.append(SeismicEvent(
-            lat=coords[1],
-            lon=coords[0],
-            mag=4.0,
-            place=props.get("VolcanoName"),
-            time=None,
-            last_eruption=props.get("LastEruption"),
-        ))
+        volcanoes.append(
+            SeismicEvent(
+                lat=coords[1],
+                lon=coords[0],
+                mag=4.0,
+                place=props.get("VolcanoName"),
+                time=None,
+                last_eruption=props.get("LastEruption"),
+            )
+        )
     return volcanoes

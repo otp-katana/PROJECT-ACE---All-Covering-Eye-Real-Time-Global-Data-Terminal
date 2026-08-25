@@ -1,48 +1,50 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 :root {
-  --bg-root:    #08080f;
-  --bg-panel:   rgba(13, 12, 26, 0.85);
-  --bg-card:    rgba(255, 255, 255, 0.03);
-  --accent:     #8A72B1;
+  --bg-root: #08080f;
+  --bg-panel: rgba(13, 12, 26, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --accent: #8a72b1;
   --accent-dim: rgba(138, 114, 177, 0.18);
-  --border:     rgba(138, 114, 177, 0.14);
-  --border-md:  rgba(138, 114, 177, 0.32);
-  --text:       #E2E0F0;
+  --border: rgba(138, 114, 177, 0.14);
+  --border-md: rgba(138, 114, 177, 0.32);
+  --text: #e2e0f0;
   --text-muted: rgba(226, 224, 240, 0.38);
-  --text-dim:   rgba(226, 224, 240, 0.20);
-  --green:      #3DD68C;
-  --yellow:     #F5C542;
-  --orange:     #F5844A;
-  --red:        #EF4444;
+  --text-dim: rgba(226, 224, 240, 0.2);
+  --green: #3dd68c;
+  --yellow: #f5c542;
+  --orange: #f5844a;
+  --red: #ef4444;
 }
 
 body {
   background: var(--bg-root);
   color: var(--text);
-  font-family: 'Inter', 'SF Pro Text', system-ui, sans-serif;
+  font-family: "Inter", "SF Pro Text", system-ui, sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
 :root {
-  --bg-root:    #08080f;
-  --bg-panel:   rgba(13, 12, 26, 0.85);
-  --bg-card:    rgba(255, 255, 255, 0.03);
-  --accent:     #AAA5B9;
-  --accent-bar: #BEAED5;
+  --bg-root: #08080f;
+  --bg-panel: rgba(13, 12, 26, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --accent: #aaa5b9;
+  --accent-bar: #beaed5;
   --accent-dim: rgba(170, 165, 185, 0.15);
-  --border:     rgba(170, 165, 185, 0.16);
-  --border-md:  rgba(190, 174, 213, 0.38);
-  --text:       #FFFFFF;
-  --text-muted: #E8D5EF;
-  --text-dim:   rgba(232, 213, 239, 0.40);
-  --green:      #3DD68C;
-  --yellow:     #F5C542;
-  --orange:     #F5844A;
-  --red:        #EF4444;
+  --border: rgba(170, 165, 185, 0.16);
+  --border-md: rgba(190, 174, 213, 0.38);
+  --text: #ffffff;
+  --text-muted: #e8d5ef;
+  --text-dim: rgba(232, 213, 239, 0.4);
+  --green: #3dd68c;
+  --yellow: #f5c542;
+  --orange: #f5844a;
+  --red: #ef4444;
 }

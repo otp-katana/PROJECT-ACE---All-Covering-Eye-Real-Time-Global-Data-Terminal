@@ -13,6 +13,7 @@ app.add_middleware(
 
 app.include_router(omori_router, prefix="/api")
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
