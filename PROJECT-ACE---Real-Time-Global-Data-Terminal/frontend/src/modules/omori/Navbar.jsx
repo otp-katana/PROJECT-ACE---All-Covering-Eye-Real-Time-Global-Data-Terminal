@@ -32,7 +32,7 @@ export default function Navbar({ tick }) {
             color: COLORS.textDim,
           }}
         >
-          GLOBAL DASHBOARD v0.1
+          GLOBAL DASHBOARD v1.2
         </span>
       </div>
 

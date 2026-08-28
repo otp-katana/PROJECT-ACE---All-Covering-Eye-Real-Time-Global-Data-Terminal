@@ -1,41 +1,12 @@
 import { FAULT_ZONES, OMORI } from "./constants";
 
-// ── Bölüm 1: Veri üreticiler ──────────────────────────────────────────────
 
-export function gutenbergRichter(mMin = 2.0, mMax = 7.8) {
-  const b = 1.0;
-  const r = Math.random();
-  const m =
-    mMin - Math.log10(1 - r * (1 - Math.pow(10, -b * (mMax - mMin)))) / b;
-  return +Math.min(Math.max(m, mMin), mMax).toFixed(1);
-}
-
-function weightedRandom(arr) {
-  const total = arr.reduce((s, z) => s + z.weight, 0);
-  let r = Math.random() * total;
-  for (const z of arr) {
-    r -= z.weight;
-    if (r <= 0) return z;
-  }
-  return arr[arr.length - 1];
-}
-
-export function genEvent() {
-  const zone = weightedRandom(FAULT_ZONES);
-  const mag = gutenbergRichter(2.0, 7.2);
-  const depth = +Math.max(1, Math.abs(Math.random() * 28 + 4)).toFixed(1);
-  return {
-    id: `ev_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
-    mag,
-    depth,
-    lat: +(zone.lat + (Math.random() - 0.5) * 1.2).toFixed(3),
-    lon: +(zone.lon + (Math.random() - 0.5) * 1.2).toFixed(3),
-    zone: zone.name,
-    ts: new Date(),
-  };
-}
-
-// ── Bölüm 2: Alert rengi ve etiketi ──────────────────────────────────────
+// ── PART: 1 ][ ALERT COLORS & LABEL ────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Maps a magnitude value to a UI color/label. Independent of data source...
+// ...works with both mock and live (USGS) event data. Not currently wired...
+// ...into the active panel, kept for future use (e.g. highlighting critical...
+// ...events in the detail panel or event log).
 
 export function alertColor(mag) {
   if (mag < 4.0) return "#3DD68C";
@@ -51,7 +22,14 @@ export function alertLabel(mag) {
   return "CRITICAL";
 }
 
-// ── Bölüm 3: Omori Yasası ─────────────────────────────────────────────────
+// ── PART: 2 ][ OMORI's LAW ─────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Numerical integration of the Omori-Utsu aftershock decay law...
+// ...(n(t) = K / (c + t)^p) plus Båth's Law for expected max aftershock...
+// magnitude. Takes a real event magnitude and returns predicted aftershock...
+// ...counts over several time windows. Not yet connected to the detail panel...
+// ...planned for a future "statistical anomaly detection" feature.
+
 
 function omoriIntegrate(t1, t2, K) {
   const { c, p } = OMORI;
