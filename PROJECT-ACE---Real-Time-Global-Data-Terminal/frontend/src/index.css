@@ -1,3 +1,6 @@
+/* ───────────────────────────────────────────────────────────────────────── */
+/* ── PART: 1 ][ RESET ───────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -6,31 +9,11 @@
   padding: 0;
 }
 
-:root {
-  --bg-root: #08080f;
-  --bg-panel: rgba(13, 12, 26, 0.85);
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --accent: #8a72b1;
-  --accent-dim: rgba(138, 114, 177, 0.18);
-  --border: rgba(138, 114, 177, 0.14);
-  --border-md: rgba(138, 114, 177, 0.32);
-  --text: #e2e0f0;
-  --text-muted: rgba(226, 224, 240, 0.38);
-  --text-dim: rgba(226, 224, 240, 0.2);
-  --green: #3dd68c;
-  --yellow: #f5c542;
-  --orange: #f5844a;
-  --red: #ef4444;
-}
-
-body {
-  background: var(--bg-root);
-  color: var(--text);
-  font-family: "Inter", "SF Pro Text", system-ui, sans-serif;
-  font-size: 13px;
-  -webkit-font-smoothing: antialiased;
-}
-
+/* ───────────────────────────────────────────────────────────────────────── */
+/* ── PART: 2 ][ COLOR PALETTE ───────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────────── */
+/* Active design system colors, consumed as inline styles throughout the... */
+/* ...dashboard (not all values below are wired to every component yet). */
 :root {
   --bg-root: #08080f;
   --bg-panel: rgba(13, 12, 26, 0.85);
@@ -47,4 +30,15 @@ body {
   --yellow: #f5c542;
   --orange: #f5844a;
   --red: #ef4444;
+}
+
+/* ───────────────────────────────────────────────────────────────────────── */
+/* ── PART: 3 ][ BASE TYPOGRAPHY ─────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────────── */
+body {
+  background: var(--bg-root);
+  color: var(--text);
+  font-family: "Inter", "SF Pro Text", system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
 }
