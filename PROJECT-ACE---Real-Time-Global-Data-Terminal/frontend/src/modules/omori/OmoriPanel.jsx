@@ -42,7 +42,14 @@ const CORE_ICONS = {
   post_event: "◈",
   cassandra_ai: "✦",
 };
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 1 ][ MAIN PANEL ──────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Root component for the OMORI module panel. Renders three "Core" categories...
+// ...(Core Dynamics, Post-Event, Cassandra AI) as tabs, and within the active...
+// ...tab, a list of toggleable layers. Seismic and Volcanic layers are...
+// ...expandable — clicking their label reveals a filter slider and (for...
+// ...seismic) a live event log.
 export default function OmoriPanel({
   toggles,
   onToggle,
@@ -59,7 +66,10 @@ export default function OmoriPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* ── CORE ICONS — TOP ROW ── */}
+
+      {/* ── SUB: CORE TABS ──────────────────────────────────────────────── */}
+      {/* Top row of icons for switching between Core Dynamics / Post-Event /... */}
+      {/* ...Cassandra AI. */}
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         {CORES.map((core) => (
           <button
@@ -106,8 +116,11 @@ export default function OmoriPanel({
           </button>
         ))}
       </div>
-
-      {/* ── CORE, SUB-CONTENTS ── */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: ACTIVE CORE CONTENTS ─────────────────────────────────────── */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Renders the toggle list for whichever core tab is open, with... */}
+      {/* ...expandable filter/log sections for seismic and volcanic layers. */}
       <div style={{ flex: 1, overflowY: "visible" }}>
         {CORES.filter((c) => c.id === openCore).map((core) => (
           <div
@@ -165,7 +178,12 @@ export default function OmoriPanel({
     </div>
   );
 }
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 2 ][ TOGGLE ROW ──────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// A single layer row: label + on/off switch. If `expandable` is true, the...
+// ...label itself becomes clickable and shows a rotating chevron indicating...
+// ...whether the row's filter/log section is open.
 function ToggleRow({
   label,
   enabled,
@@ -252,7 +270,11 @@ function ToggleRow({
     </div>
   );
 }
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 3 ][ MAGNITUDE SLIDER ────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Filters seismic events by minimum magnitude. Filtering happens client-side...
+// ...(no API refetch) — see useGlobe.js's magnitude visibility effect.
 function MagnitudeSlider({ value, onChange }) {
   return (
     <div
@@ -287,7 +309,12 @@ function MagnitudeSlider({ value, onChange }) {
     </div>
   );
 }
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 4 ][ ERUPTION YEAR SLIDER ────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Filters volcanoes by minimum last-eruption year. Volcanoes with unknown...
+// ...eruption dates (null) always remain visible — see project's scientific...
+// ...integrity principle: "no data" is not the same as "inactive".
 function EruptionYearSlider({ value, onChange }) {
   const label = value <= 0 ? `MÖ ${Math.abs(value)}` : `MS ${value}`;
   return (
@@ -323,7 +350,12 @@ function EruptionYearSlider({ value, onChange }) {
     </div>
   );
 }
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 5 ][ EVENT LOG ───────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Live, auto-refreshing list of seismic events, newest first. Clicking a row...
+// ...triggers onEventClick, which the parent (MainLayout) uses to navigate the...
+// ...globe camera to that point (see useGlobe.js's focusRequest effect).
 function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
   return (
     <div
@@ -336,6 +368,11 @@ function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
         padding: "6px 8px",
       }}
     >
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: EMPTY STATE ──────────────────────────────────────────────── */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Shown when no events are available yet (initial load) or the... */}
+      {/* ...magnitude filter excludes every event. */}
       {(!events || events.length === 0) && (
         <div
           style={{
@@ -347,6 +384,12 @@ function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
           Veri bekleniyor...
         </div>
       )}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: EVENT ROWS ───────────────────────────────────────────────── */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* One row per event, newest first. Clicking a row calls onEventClick... */}
+      {/* ...to trigger the globe's camera-focus navigation. Hover state is... */}
+      {/* ...lifted to the parent so only one row highlights at a time. */}
       {events?.map((e, i) => {
         const key = `${e.lat}-${e.lon}`;
         const isHovered = key === hoveredKey;
@@ -397,7 +440,11 @@ function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
     </div>
   );
 }
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 6 ][ TIME AGO HELPER ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Formats a raw USGS epoch-millisecond timestamp string into a relative...
+// ..."X minutes/hours/days ago" label.
 function timeAgo(timeStr) {
   if (!timeStr) return "";
   const diffMs = Date.now() - Number(timeStr);
