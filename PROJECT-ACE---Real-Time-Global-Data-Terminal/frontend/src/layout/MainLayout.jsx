@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import Globe from "../globe/Globe";
 import OmoriPanel from "../modules/omori/OmoriPanel";
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 1 ][ PROTOCOLS & LAYOUT CONSTANTS ────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Defines the six modules shown in the left sidebar. Only OMORI is currently...
+// ...wired to a real panel — the rest render a "NOT YET DEPLOYED" placeholder...
+// ...until their own modules are built.
 const PROTOCOLS = [
   {
     id: "OMORI",
@@ -19,6 +25,14 @@ const NAV_H = 64;
 const SIDE_W = 280;
 const PANEL_W = 320;
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 2 ][ ROOT COMPONENT — STATE & DATA FETCHING ──────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Owns all shared state for the dashboard (active module, toggles, filters,
+// selection, camera focus requests) and centralizes the seismic data poll...
+// ...(60s interval, USGS live feed) so both the globe and the OMORI panel...
+// ...consume a single source of truth. See useGlobe.js for how these props...
+// ...drive the 3D scene.
 export default function MainLayout() {
   const [active, setActive] = useState(null);
   const [isLive, setIsLive] = useState(true);
@@ -78,7 +92,12 @@ export default function MainLayout() {
         color: "#FFFFFF",
       }}
     >
-      {/* ── GLOBE — FULLSCREEN FLAT ── */}
+
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: GLOBE MOUNT ────────────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* Fullscreen background layer hosting the Three.js globe. All other... */}
+      {/* ...UI floats above it via absolute positioning. */}
       <div
         style={{
           position: "absolute",
@@ -99,7 +118,12 @@ export default function MainLayout() {
         />
       </div>
 
-      {/* ── NAVBAR ── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: NAVBAR ─────────────────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* Top bar: menu icon (unwired — reserved for future sidebar controls),... */}
+      {/* ...orbital ring toggle, reset view, notification icon (unwired), and... */}
+      {/* ...the live/offline connection indicator. */}
       <nav
         style={{
           position: "absolute",
@@ -119,7 +143,6 @@ export default function MainLayout() {
           margin: "0 8px",
         }}
       >
-        {/* NAVBAR LEFT: MENU ICON */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <button
             style={{
@@ -163,7 +186,6 @@ export default function MainLayout() {
           </button>
         </div>
 
-        {/* NAVBAR RIGHT: NOTIFICATION + LIVE ICONS */}
         <button
           onClick={() => setRingsVisible((v) => !v)}
           title="Orbital Rings"
@@ -256,7 +278,11 @@ export default function MainLayout() {
         </div>
       </nav>
 
-      {/* ── LEFT SIDEBAR — ONYL MODULES ── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: LEFT SIDEBAR — MODULE LIST ─────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* Renders PROTOCOLS as selectable buttons; clicking one opens the... */}
+      {/* ...module panel below. */}
       <aside
         style={{
           position: "absolute",
@@ -345,7 +371,11 @@ export default function MainLayout() {
         ))}
       </aside>
 
-      {/* ── MODULE PANEL ── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: MODULE PANEL ───────────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* Opens when a protocol is selected. Renders OmoriPanel for OMORI;... */}
+      {/* ...shows a placeholder for all other (not yet deployed) modules. */}
       {active && (
         <aside
           style={{
@@ -364,7 +394,6 @@ export default function MainLayout() {
             padding: 16,
           }}
         >
-          {/* Başlık */}
           <div
             style={{
               display: "flex",
@@ -446,7 +475,12 @@ export default function MainLayout() {
         </aside>
       )}
 
-      {/* ── POINT DETAIL PANEL — SAĞ, SABİT ── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* ── SUB: POINT DETAIL PANEL ─────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────── */}
+      {/* Fixed panel on the right, shown when a globe point (seismic or... */}
+      {/* ...volcanic) is selected via click or the event log. Renders... */}
+      {/* ...different fields depending on point type. */}
       {selectedPoint && (
         <aside
           style={{
@@ -465,7 +499,6 @@ export default function MainLayout() {
             padding: 16,
           }}
         >
-          {/* Başlık */}
           <div
             style={{
               display: "flex",
@@ -516,8 +549,7 @@ export default function MainLayout() {
               ✕
             </button>
           </div>
-
-          {/* İçerik */}
+          
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {selectedPoint.place && (
               <DetailRow label="LOCATION" value={selectedPoint.place} />
@@ -575,6 +607,10 @@ export default function MainLayout() {
   );
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// ── PART: 3 ][ DETAIL ROW HELPER ────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
+// Small label/value row used throughout the point detail panel.
 function DetailRow({ label, value }) {
   return (
     <div

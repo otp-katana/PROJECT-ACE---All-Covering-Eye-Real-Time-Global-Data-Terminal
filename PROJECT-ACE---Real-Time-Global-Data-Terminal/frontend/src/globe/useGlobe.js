@@ -2,8 +2,11 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { feature } from "topojson-client";
 
-// MOCK KATMANI
-
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 1 ][ MOCK DATA ───────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Placeholder fault lines (approximate coordinates, not scientifically...
+// ...precise). Real fault data integration is a planned future task.
 const MOCK_FAULTS = [
   {
     name: "NAF",
@@ -40,6 +43,15 @@ const MOCK_FAULTS = [
   },
 ];
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 2 ][ MAIN SCENE SETUP ────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Runs once on mount ([] deps). Builds the entire Three.js scene: globe...
+// ...meshes, continent outlines, orbital rings, empty data layer groups, all...
+// ...mouse/keyboard interactions (drag-rotate, shift-select, click, hover,...
+// ...scroll-zoom), the render loop (navigation, pulse, and breath animations),...
+// ...and resize/cleanup handling. Everything below lives inside this one effect...
+// ...WebGL context.
 export function useGlobe(
   mountRef,
   seismicLayers,
@@ -51,6 +63,9 @@ export function useGlobe(
   onSelectionBoxChange,
   focusRequest,
 ) {
+
+  // ──────────────────────────────────────────────────────────────────────
+  // ── SUB: SCENE, CAMERA, RENDERER ──────────────────────────────────────
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
@@ -58,13 +73,15 @@ export function useGlobe(
   const frameRef = useRef(null);
   const ringsRef = useRef([]);
   const autoRotate = useRef(true);
-
   const layersRef = useRef({ seismic: null, volcanic: null, faults: null });
   const isDragging = useRef(false);
   const shiftDragging = useRef(false);
   const boxSelectLock = useRef(false);
   const boxStart = useRef({ x: 0, y: 0 });
   const justFinishedBoxSelect = useRef(false);
+
+  // ──────────────────────────────────────────────────────────────────────
+  // ── SUB: GLOBE MESHES ─────────────────────────────────────────────────
   const solidSphereRef = useRef(null);
   const frozen = useRef(false);
   const navigating = useRef(false);
@@ -79,14 +96,13 @@ export function useGlobe(
   const selectedPointRef = useRef(null);
   const prevMouse = useRef({ x: 0, y: 0 });
 
-  // ANA useEFFECT
+  // MAIN USEEFFECT
   useEffect(() => {
     if (!mountRef.current) return;
 
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
 
-    // ── Sahne ──────────────────────────────────────────────────────────
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.z = 2.8;
@@ -101,12 +117,10 @@ export function useGlobe(
     cameraRef.current = camera;
     rendererRef.current = renderer;
 
-    // ── Ana küre grubu — halkalar dahil her şey buraya ─────────────────
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
     globeRef.current = globeGroup;
 
-    // ── İç dolgu küre ──────────────────────────────────────────────────
     const solidSphere = new THREE.Mesh(
       new THREE.SphereGeometry(0.995, 64, 64),
       new THREE.MeshBasicMaterial({
@@ -118,7 +132,6 @@ export function useGlobe(
     globeGroup.add(solidSphere);
     solidSphereRef.current = solidSphere;
 
-    // ── Tel kafes küre ─────────────────────────────────────────────────
     const wireSphere = new THREE.Mesh(
       new THREE.SphereGeometry(1, 48, 48),
       new THREE.MeshBasicMaterial({
@@ -131,7 +144,6 @@ export function useGlobe(
     globeGroup.add(wireSphere);
     wireSphereRef.current = wireSphere;
 
-    // ── Glow ───────────────────────────────────────────────────────────
     const globeGlow = new THREE.Mesh(
       new THREE.SphereGeometry(1.08, 48, 48),
       new THREE.MeshBasicMaterial({
@@ -144,7 +156,8 @@ export function useGlobe(
     scene.add(globeGlow);
     globeGlowRef.current = globeGlow;
 
-    // ── Kıtalar ────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: CONTINENT OUTLINES ───────────────────────────────────────────
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
       .then((r) => r.json())
       .then((world) => {
@@ -179,8 +192,9 @@ export function useGlobe(
             coordinates.forEach((poly) => poly.forEach(processRing));
         });
       });
-
-    // ── Orbital halkalar — globeGroup içinde ───────────────────────────
+    
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: ORBITAL RINGS ────────────────────────────────────────────────
     const ringConfigs = [
       {
         radius: 1.38,
@@ -201,12 +215,10 @@ export function useGlobe(
 
     const rings = [];
     ringConfigs.forEach((cfg) => {
-      // Her halka kendi grubu içinde — kendi ekseni etrafında döner
       const ringGroup = new THREE.Group();
       ringGroup.rotation.x = cfg.rotX;
       ringGroup.rotation.z = cfg.rotZ;
 
-      // Halka — ana
       const ringMain = new THREE.Mesh(
         new THREE.TorusGeometry(cfg.radius, cfg.tube, 16, 120),
         new THREE.MeshBasicMaterial({
@@ -218,7 +230,6 @@ export function useGlobe(
       );
       ringGroup.add(ringMain);
 
-      // Halka arka — ince, soluk
       const ringBack = new THREE.Mesh(
         new THREE.TorusGeometry(cfg.radius, cfg.tube * 0.4, 16, 120),
         new THREE.MeshBasicMaterial({
@@ -231,7 +242,6 @@ export function useGlobe(
       );
       ringGroup.add(ringBack);
 
-      // Hale — halkanın etrafında yumuşak parıltı
       const ringHalo = new THREE.Mesh(
         new THREE.TorusGeometry(cfg.radius, cfg.tube * 2.5, 16, 120),
         new THREE.MeshBasicMaterial({
@@ -243,7 +253,6 @@ export function useGlobe(
       );
       ringGroup.add(ringHalo);
 
-      // Nod çekirdek — saf beyaz
       const nod = new THREE.Mesh(
         new THREE.SphereGeometry(0.022, 12, 12),
         new THREE.MeshBasicMaterial({
@@ -255,7 +264,6 @@ export function useGlobe(
       nod.position.set(cfg.radius, 0, 0);
       ringGroup.add(nod);
 
-      // Hale 1 — orta
       const halo1 = new THREE.Mesh(
         new THREE.SphereGeometry(0.038, 12, 12),
         new THREE.MeshBasicMaterial({
@@ -267,7 +275,6 @@ export function useGlobe(
       halo1.position.set(cfg.radius, 0, 0);
       ringGroup.add(halo1);
 
-      // Hale 2 — dış yumuşak
       const halo2 = new THREE.Mesh(
         new THREE.SphereGeometry(0.058, 12, 12),
         new THREE.MeshBasicMaterial({
@@ -279,27 +286,23 @@ export function useGlobe(
       halo2.position.set(cfg.radius, 0, 0);
       ringGroup.add(halo2);
 
-      // Halka grubunu küre grubuna ekle — küreyle birlikte döner
       globeGroup.add(ringGroup);
       rings.push({ group: ringGroup, speed: cfg.speed });
     });
     ringsRef.current = rings;
 
-    //  KATMANLAR------
-
-    // ── Seismic katmanı — başlangıçta boş ve gizli ─────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: DATA LAYER GROUPS ────────────────────────────────────────────
     const seismicGroup = new THREE.Group();
     seismicGroup.visible = false;
     globeGroup.add(seismicGroup);
     layersRef.current.seismic = seismicGroup;
 
-    // ── Volcanic katmanı — başlangıçta boş ve gizli ─────────────────────
     const volcanicGroup = new THREE.Group();
     volcanicGroup.visible = false;
     globeGroup.add(volcanicGroup);
     layersRef.current.volcanic = volcanicGroup;
 
-    // ── Faults katmanı — başlangıçta boş ve gizli ───────────────────────
     const faultsGroup = new THREE.Group();
     faultsGroup.visible = false;
     globeGroup.add(faultsGroup);
@@ -307,11 +310,11 @@ export function useGlobe(
 
     // ── MOUSE ETKİLEŞİMLERİ ───────────────────────────────────────────────
 
-    // ── Raycaster — nokta tıklama tespiti ────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: MOUSE & RAYCASTER INTERACTIONS ───────────────────────────────
     const raycaster = new THREE.Raycaster();
     const pointerNDC = new THREE.Vector2();
 
-    // ── Seçim kutusu içindeki noktaları bul (ekran koordinatlarına projekte ederek) ──
     const getPointsInBox = (x1, y1, x2, y2) => {
       const rect = renderer.domElement.getBoundingClientRect();
       const minX = Math.min(x1, x2),
@@ -355,9 +358,9 @@ export function useGlobe(
 
       if (justFinishedBoxSelect.current) {
         justFinishedBoxSelect.current = false;
-        return; // bu click, box-select'in doğal sonucu, görmezden gel
+        return;
       }
-      boxSelectLock.current = false; // ← eklendi
+      boxSelectLock.current = false;
       onSelectionBoxChange?.(null);
 
       const rect = renderer.domElement.getBoundingClientRect();
@@ -370,11 +373,9 @@ export function useGlobe(
       const volcanicGroup = layersRef.current.volcanic;
       const targets = [];
 
-      // Sadece görünür (toggle açık) katmanların noktalarını hedef listesine al
       if (seismicGroup?.visible) targets.push(...seismicGroup.children);
       if (volcanicGroup?.visible) targets.push(...volcanicGroup.children);
 
-      // Küre yüzeyini de engel olarak ekle
       if (solidSphereRef.current) targets.push(solidSphereRef.current);
 
       const intersects = raycaster.intersectObjects(targets, true);
@@ -382,7 +383,6 @@ export function useGlobe(
       if (intersects.length > 0) {
         const nearest = intersects[0].object;
 
-        // En yakın çarpışma küre yüzeyiyse, hiçbir noktaya tıklanmadı say
         if (nearest === solidSphereRef.current) return;
 
         let obj = nearest;
@@ -440,8 +440,7 @@ export function useGlobe(
       if (frozen.current) return;
 
       if (e.button === 0 && e.shiftKey) {
-        if (autoRotate.current) return; // küre dönüyorsa seçim başlatılamaz
-
+        if (autoRotate.current) return;
         const rect = renderer.domElement.getBoundingClientRect();
         shiftDragging.current = true;
         boxStart.current = {
@@ -458,7 +457,7 @@ export function useGlobe(
       }
 
       if (e.button === 0) {
-        if (boxSelectLock.current) return; // panel açıkken normal sürüklemeyi engelle
+        if (boxSelectLock.current) return;
         isDragging.current = true;
         prevMouse.current = { x: e.clientX, y: e.clientY };
       }
@@ -512,11 +511,10 @@ export function useGlobe(
       if (e.button === 0) isDragging.current = false;
     };
 
-    // ── Scroll zoom ────────────────────────────────────────────────────
     const onWheel = (e) => {
       e.preventDefault();
       if (frozen.current) return;
-      if (boxSelectLock.current) return; // ← eklendi
+      if (boxSelectLock.current) return;
       camera.position.z = Math.max(
         1.5,
         Math.min(5.0, camera.position.z + e.deltaY * 0.003),
@@ -531,11 +529,11 @@ export function useGlobe(
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
-    // ── Animasyon ──────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: ANIMATION LOOP ───────────────────────────────────────────────
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
 
-      // ── Hedefe döndürme animasyonu ──
       if (navigating.current && navigateTarget.current) {
         const target = navigateTarget.current;
         const dx = target.y - globeGroup.rotation.y;
@@ -544,7 +542,6 @@ export function useGlobe(
         globeGroup.rotation.y += dx * 0.08;
         globeGroup.rotation.x += dz * 0.08;
 
-        // Kamera mesafesini de hedefe yumuşakça taşı (varsa)
         if (target.z != null) {
           const dCam = target.z - camera.position.z;
           camera.position.z += dCam * 0.08;
@@ -564,7 +561,7 @@ export function useGlobe(
           }
 
           if (target.triggerBreath) {
-            autoRotate.current = false; // breath bitene kadar dönme
+            autoRotate.current = false;
           }
 
           if (target.pointGroup) {
@@ -591,7 +588,6 @@ export function useGlobe(
         globeGroup.rotation.y += 0.0012;
       }
 
-      // ── Pulse (kalp atışı) efekti ──
       if (pulseTarget.current) {
         const elapsed = performance.now() - pulseStartTime.current;
         const duration = 2500;
@@ -609,7 +605,7 @@ export function useGlobe(
           pulseTarget.current = null;
         } else {
           const pulse = (Math.sin(elapsed * 0.01) + 1) / 2;
-          const pulseColor = new THREE.Color(0xffd24d); // parlak sarı/amber
+          const pulseColor = new THREE.Color(0xffd24d);
 
           pulseTarget.current.children.forEach((mesh, idx) => {
             if (mesh.userData.baseOpacity == null) {
@@ -633,16 +629,14 @@ export function useGlobe(
         }
       }
 
-      // ── Küre "nefes alma" efekti (tel kafes + halo, halo gecikmeli) ──
       if (breathing.current && wireSphereRef.current) {
         const elapsed = performance.now() - breathStartTime.current;
         const duration = 500;
         const haloDelay = 60;
-        const totalDuration = duration + haloDelay; // halo bitene kadar toplam süre
+        const totalDuration = duration + haloDelay;
         const baseColor = 0xccc8d8;
         const breathColor = 0xe8d5ef;
 
-        // Tel kafes küre
         if (elapsed > duration) {
           wireSphereRef.current.material.color.setHex(baseColor);
           wireSphereRef.current.material.opacity = 0.18;
@@ -655,7 +649,6 @@ export function useGlobe(
           wireSphereRef.current.material.opacity = 0.18 + wave * 0.35;
         }
 
-        // Kıta çizgileri, wireSphere ile aynı zamanlama
         if (continentLineMatRef.current) {
           if (elapsed > duration) {
             continentLineMatRef.current.color.setHex(0xe8d5ef);
@@ -670,7 +663,6 @@ export function useGlobe(
           }
         }
 
-        // Halo, gecikmeli başlayıp aynı süre boyunca oynasın
         if (globeGlowRef.current) {
           const haloElapsed = elapsed - haloDelay;
           if (haloElapsed >= 0 && haloElapsed <= duration) {
@@ -682,12 +674,10 @@ export function useGlobe(
           }
         }
 
-        // Her ikisi de tamamlanınca breathing'i kapat
         if (elapsed > totalDuration) {
           breathing.current = false;
 
           if (pulseTarget.current == null) {
-            // Bu bir reset breath'iydi (nokta odaklı değil) — 60ms sonra dönüşü başlat
             setTimeout(() => {
               autoRotate.current = true;
             }, 15);
@@ -703,7 +693,8 @@ export function useGlobe(
     };
     animate();
 
-    // ── Resize ─────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: RESIZE HANDLER ───────────────────────────────────────────────
     const onResize = () => {
       if (!mountRef.current) return;
       const w = mountRef.current.clientWidth;
@@ -714,7 +705,8 @@ export function useGlobe(
     };
     window.addEventListener("resize", onResize);
 
-    // ── Temizlik ───────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
+    // ── SUB: CLEANUP ──────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(frameRef.current);
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
@@ -732,9 +724,13 @@ export function useGlobe(
     };
   }, []);
 
-  // useEFFECT KATMANI
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── PART: 3 ][ LAYER DATA EFFECTS ──────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // Draws/redraws each data layer's points whenever its source data changes.
+  // Seismic redraws on every seismicEvents update (polling); volcanic fetches...
+  // ...once on first toggle-on; faults draws once from MOCK_FAULTS.
 
-  // ── Seismic katmanı — prop'tan gelen veriyle çiz ──────────────────────
   useEffect(() => {
     const group = layersRef.current.seismic;
     if (!group) return;
@@ -811,14 +807,12 @@ export function useGlobe(
       group.add(pointGroup);
     });
 
-    // Mevcut magnitude filtresini yeni çizilen noktalara uygula
     group.children.forEach((pointGroup) => {
       const mag = pointGroup.userData?.mag ?? 0;
       pointGroup.visible = mag >= (magnitudeFilter ?? 1.0);
     });
   }, [seismicEvents]);
 
-  // ── Volcanic katmanı — toggle'a göre doldur/gizle ────────────────────
   useEffect(() => {
     const group = layersRef.current.volcanic;
     if (!group) return;
@@ -903,7 +897,6 @@ export function useGlobe(
     group.visible = !!seismicLayers?.volcanic;
   }, [seismicLayers?.volcanic]);
 
-  // ── Faults katmanı — toggle'a göre doldur/gizle ──────────────────────
   useEffect(() => {
     const group = layersRef.current.faults;
     if (!group) return;
@@ -925,7 +918,7 @@ export function useGlobe(
             Math.cos(phi),
             Math.sin(phi) * Math.sin(theta),
           );
-          return v.multiplyScalar(1.002); // yüzeyden hafif dışa offset
+          return v.multiplyScalar(1.002);
         });
 
         const geo = new THREE.BufferGeometry().setFromPoints(points);
@@ -936,13 +929,22 @@ export function useGlobe(
     group.visible = !!seismicLayers?.faults;
   }, [seismicLayers?.faults]);
 
-  // ── Orbital halkalar — görünürlük toggle ─────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── PART: 4 ][ RING VISIBILITY ─────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     ringsRef.current.forEach((r) => {
       r.group.visible = ringsVisible ?? true;
     });
   }, [ringsVisible]);
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── PART: 5 ][ IMPERATIVE CONTROLS ─────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // Exposed to the parent component (Globe.jsx) for one-off actions that...
+  // ...don't fit the declarative prop/effect pattern: unfreezing after a point...
+  // ...detail panel closes, and resetting the camera to its default view.
   const unfreeze = () => {
     frozen.current = false;
     selectedPointRef.current = null;
@@ -960,7 +962,12 @@ export function useGlobe(
     navigating.current = true;
   };
 
-  // ── Magnitude filtresi — API'ye gitmeden sadece görünürlük ───────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── PART: 6 ][ FILTER VISIBILITY EFFECTS ───────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // Client-side filtering — toggles point visibility without refetching data.
+  // Kept separate from PART 3's drawing effects so filter changes are cheap.
+
   useEffect(() => {
     const group = layersRef.current.seismic;
     if (!group) return;
@@ -971,26 +978,29 @@ export function useGlobe(
     });
   }, [magnitudeFilter]);
 
-  // ── Eruption year filtresi — API'ye gitmeden sadece görünürlük ───────
   useEffect(() => {
     const group = layersRef.current.volcanic;
     if (!group) return;
 
     group.children.forEach((pointGroup) => {
       const year = pointGroup.userData?.lastEruption;
-      // year null/undefined ise (tarih bilinmiyor) her zaman görünür kalsın
       pointGroup.visible =
         year == null || year >= (eruptionYearFilter ?? -10000);
     });
   }, [eruptionYearFilter]);
 
-  // ── Seismic katmanı — toggle görünürlüğü ──────────────────────────────
   useEffect(() => {
     const group = layersRef.current.seismic;
     if (group) group.visible = !!seismicLayers?.seismic;
   }, [seismicLayers?.seismic]);
 
-  // ── Log'dan gelen focus isteğini işle ─────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── PART: 7 ][ FOCUS / NAVIGATION REQUEST ──────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // Triggered when the event log (or a future caller) requests the camera...
+  // ...navigate to a specific point. Computes target rotation and a safe zoom...
+  // ...distance (see PART 2's animation loop for how this target is consumed).
+
   useEffect(() => {
     if (!focusRequest) return;
 
@@ -1010,8 +1020,8 @@ export function useGlobe(
     const targetRotY = THREE.MathUtils.degToRad(targetLon);
     const targetRotX = THREE.MathUtils.degToRad(lat) * 0.6;
 
-    const safeZoomMin = 2.2; // bu kadar yakınsa geri çek
-    const safeZoomMax = 3.6; // bu kadar uzaksa yaklaştır
+    const safeZoomMin = 2.2;
+    const safeZoomMax = 3.6;
     const currentZoom = cameraRef.current.position.z;
 
     let targetZoom = currentZoom;

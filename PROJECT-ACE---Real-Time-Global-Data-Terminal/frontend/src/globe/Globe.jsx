@@ -1,6 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import { useGlobe } from "./useGlobe";
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 1 ][ GLOBE COMPONENT ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Mounts the Three.js scene (via useGlobe) into a full-height div and renders...
+// ...two overlay layers on top of it: the shift+drag selection box, and — when...
+// ...a selection contains points — the SelectionPanel showing them declutered.
+// unfreezeSignal and resetTrigger are one-way triggers from the parent...
+// ...(MainLayout) that call back into useGlobe's imperative controls.
 export default function Globe({
   seismicLayers,
   ringsVisible,
@@ -68,6 +76,13 @@ export default function Globe({
   );
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 2 ][ OVERLAP RESOLUTION ──────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Iterative repulsion algorithm: pushes apart any two points closer than...
+// ...their combined radius, repeating until stable (or iteration cap). Used by...
+// ...SelectionPanel to keep overlapping globe points readable while preserving...
+// ...their relative screen layout.
 function resolveOverlapsVariable(positions, iterations = 30) {
   const pts = positions.map((p) => ({ ...p }));
 
@@ -98,6 +113,15 @@ function resolveOverlapsVariable(positions, iterations = 30) {
   return pts;
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// ── PART: 3 ][ SELECTION PANEL ─────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Small floating panel shown after a shift+drag box selection. Projects the...
+// ...selected points' screen positions into panel-local space, declutters them...
+// ...via resolveOverlapsVariable, and clamps the panel itself to stay within...
+// ...the viewport (flips left/up if it would overflow the right/bottom edge).
+// Point size scales with magnitude; shape distinguishes seismic (circle)...
+// ...from volcanic (rounded square).
 function SelectionPanel({ box, onPointClick }) {
   const panelW = 160;
   const panelH = 160;
@@ -169,7 +193,7 @@ function SelectionPanel({ box, onPointClick }) {
           <div
             key={i}
             onClick={() => onPointClick?.(p)}
-            title={`${p.place || "Bilinmeyen"} — M${p.mag?.toFixed(1)}`}
+            title={`${p.place || "Unknown"} — M${p.mag?.toFixed(1)}`}
             style={{
               position: "absolute",
               left: clampedX,
