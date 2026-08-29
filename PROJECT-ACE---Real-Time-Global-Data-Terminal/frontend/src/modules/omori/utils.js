@@ -1,13 +1,11 @@
 import { FAULT_ZONES, OMORI } from "./constants";
 
-
 // ── PART: 1 ][ ALERT COLORS & LABEL ────────────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
 // Maps a magnitude value to a UI color/label. Independent of data source...
 // ...works with both mock and live (USGS) event data. Not currently wired...
 // ...into the active panel, kept for future use (e.g. highlighting critical...
 // ...events in the detail panel or event log).
-
 export function alertColor(mag) {
   if (mag < 4.0) return "#3DD68C";
   if (mag < 5.5) return "#F5C542";
@@ -29,8 +27,6 @@ export function alertLabel(mag) {
 // magnitude. Takes a real event magnitude and returns predicted aftershock...
 // ...counts over several time windows. Not yet connected to the detail panel...
 // ...planned for a future "statistical anomaly detection" feature.
-
-
 function omoriIntegrate(t1, t2, K) {
   const { c, p } = OMORI;
   const n = 200;
