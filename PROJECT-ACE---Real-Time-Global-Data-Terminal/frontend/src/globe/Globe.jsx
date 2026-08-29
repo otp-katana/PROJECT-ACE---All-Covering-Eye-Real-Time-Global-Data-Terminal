@@ -1,3 +1,7 @@
+
+// ───────────────────────────────────────────────────────────────────────────
+// Contents: GLOBE COMPONENT · OVERLAP RESOLUTION · SELECTION PANEL
+// ───────────────────────────────────────────────────────────────────────────
 import { useRef, useEffect, useState } from "react";
 import { useGlobe } from "./useGlobe";
 

@@ -1,3 +1,13 @@
+
+// ───────────────────────────────────────────────────────────────────────────
+// Contents: MOCK DATA · MAIN SCENE SETUP (scene/camera/renderer, globe
+//           meshes, continent outlines, orbital rings, data layer groups,
+//           mouse & raycaster interactions, animation loop, resize,
+//           cleanup) · LAYER DATA EFFECTS · RING VISIBILITY ·
+//           IMPERATIVE CONTROLS · FILTER VISIBILITY EFFECTS ·
+//           FOCUS / NAVIGATION REQUEST
+// ───────────────────────────────────────────────────────────────────────────
+
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { feature } from "topojson-client";

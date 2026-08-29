@@ -1,3 +1,10 @@
+
+// ───────────────────────────────────────────────────────────────────────────
+// Contents: MAIN PANEL (core tabs, active core contents) · TOGGLE ROW ·
+//           MAGNITUDE SLIDER · ERUPTION YEAR SLIDER · EVENT LOG (empty
+//           state, event rows) · TIME AGO HELPER
+// ───────────────────────────────────────────────────────────────────────────
+
 import { useState } from "react";
 
 const CORES = [

@@ -1,3 +1,10 @@
+
+// ───────────────────────────────────────────────────────────────────────────
+// Contents: PROTOCOLS & LAYOUT CONSTANTS · ROOT COMPONENT — STATE & DATA
+//           FETCHING (globe mount, navbar, left sidebar, module panel,
+//           point detail panel) · DETAIL ROW HELPER
+// ───────────────────────────────────────────────────────────────────────────
+
 import { useState, useEffect } from "react";
 import Globe from "../globe/Globe";
 import OmoriPanel from "../modules/omori/OmoriPanel";
