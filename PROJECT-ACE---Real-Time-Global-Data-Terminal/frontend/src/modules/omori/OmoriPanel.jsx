@@ -25,10 +25,10 @@ const CORES = [
     label: 'POST-EVENT',
     active: false,
     items: [
-      { id: 'aftershocks', label: 'Artçı Deprem Kümeleri',          active: false },
-      { id: 'tsunami',     label: 'Tsunami ve Okyanus Uyarıları',   active: false },
-      { id: 'liquefaction',label: 'Zemin Sıvılaşması ve Heyelan',   active: false },
-      { id: 'deformation', label: 'Sismik Yüzey Deformasyonu',      active: false },
+      { id: 'aftershocks', label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',          active: false },
+      { id: 'tsunami',     label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',   active: false },
+      { id: 'liquefaction',label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',   active: false },
+      { id: 'deformation', label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',      active: false },
     ],
   },
   {
@@ -36,18 +36,18 @@ const CORES = [
     label: 'CASSANDRA AI',
     active: false,
     items: [
-      { id: 'heatmap',     label: 'Sismik Gerilim Isı Haritası',    active: false },
-      { id: 'anomalies',   label: 'Risk Anomalileri',               active: false },
-      { id: 'signals',     label: 'İstatistiksel Anomali Tespiti',  active: false },
-      { id: 'classify',    label: 'Öncü/Artçı Olasılık Sınıflandırması', active: false },
+      { id: 'heatmap',     label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',    active: false },
+      { id: 'anomalies',   label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',               active: false },
+      { id: 'signals',     label: '▰▰▰▰▰▰▰▰▰▰▰▰▰',  active: false },
+      { id: 'classify',    label: '▰▰▰▰▰▰▰▰▰▰▰▰▰', active: false },
     ],
   },
 ];
 
 const CORE_ICONS = {
-  core_dynamics: "◉",
-  post_event: "◈",
-  cassandra_ai: "✦",
+  core_dynamics: "◆",
+  post_event: "◇",
+  cassandra_ai: "◈",
 };
 
 // ──────────────────────────────────────────────────────────────────────────────────
@@ -312,8 +312,8 @@ function MagnitudeSlider({ value, onChange }) {
       </div>
       <input
         type="range"
-        min="1.0"
-        max="7.0"
+        min="0.0"
+        max="10.0"
         step="0.1"
         value={value}
         onChange={(e) => onChange(+e.target.value)}
@@ -393,11 +393,12 @@ function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
         <div
           style={{
             fontSize: 10,
-            color: "rgba(0,0,0,0.35)",
+            fontWeight: 600,
+            color: "rgba(0, 0, 0, 0.4)",
             padding: "4px 2px",
           }}
         >
-          Veri bekleniyor...
+          NO MORE DATA
         </div>
       )}
       

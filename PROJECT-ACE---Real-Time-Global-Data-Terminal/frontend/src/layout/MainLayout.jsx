@@ -21,11 +21,41 @@ const PROTOCOLS = [
     label: "OMORI",
     sub: "INTERNAL & EXTERNAL PHYSICAL LAYER MODULE",
   },
-  { id: "LORENZ", label: "LORENZ", sub: "GLOBAL ATMOSPHERIC DYNAMICS MODULE" },
-  { id: "----------", label: "HADLEY", sub: "Logistics & Aviation" },
-  { id: "----------", label: "ARF", sub: "Cyber Security" },
-  { id: "----------", label: "HERODOTUS", sub: "Geopolitics & OSINT" },
-  { id: "----------", label: "CLARKE", sub: "Orbital & Satellite" },
+  
+  { id: "LOVELOCK",
+    label: "LOVELOCK",
+    sub: "PLANETARY POPULATION ECOLOGY DYNAMICS MODULE",
+  },
+
+  {
+    id: "CURIE",
+    label: "CURIE",
+    sub: "MAN-MADE ECOLOGICAL DISRUPTION MODULE",
+  },
+
+  {
+    id: "DOPPLER",
+    label: "DOPPLER",
+    sub: "GLOBAL LOGISTICS & INFRASTRUCTURE GRID",
+  },
+  
+  {
+    id: "LORENZ",
+    label: "LORENZ",
+    sub: "GLOBAL ATMOSPHERIC DYNAMICS MODULE",
+  },
+  
+  {
+    id: "CLARKE",
+    label: "CLARKE",
+    sub: "EXOSPHERIC ORBITAL TELEMETRY",
+  },
+
+  {
+    id: "ARF",
+    label: "ARF",
+    sub: "CASCADE ANALYSIS ENGINE",
+  },
 ];
 
 const NAV_H = 64;
@@ -194,7 +224,7 @@ export default function MainLayout() {
 
         <button
           onClick={() => setRingsVisible((v) => !v)}
-          title="Orbital Rings"
+          title="Orbital Rings (On/Off)"
           style={{
             background: ringsVisible ? "rgba(190,174,213,0.3)" : "transparent",
             border: "1px solid rgba(190,174,213,0.5)",
@@ -207,12 +237,12 @@ export default function MainLayout() {
             alignItems: "center",
           }}
         >
-          ◈
+          ⌬
         </button>
 
         <button
           onClick={() => setResetCounter((c) => c + 1)}
-          title="Reset View"
+          title="Reset View (On/Off)"
           style={{
             background: "transparent",
             border: "1px solid rgba(190,174,213,0.5)",
@@ -225,7 +255,7 @@ export default function MainLayout() {
             alignItems: "center",
           }}
         >
-          ⟲
+          ↺
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -331,12 +361,27 @@ export default function MainLayout() {
           </div>
           <div
             style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              marginTop: 8,
               fontSize: 11,
+              fontWeight: 700,
               letterSpacing: "0.12em",
-              color: "rgb(0, 0, 0)",
+              color: "rgba(0, 0, 0, 1)",
             }}
           >
-            GLOBAL DASHBOARD v1.2
+            REAL-TIME GLOBAL DATA TERMINAL
+          </div>
+          <div
+            style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              marginTop: 3,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              color: "rgba(0, 0, 0, 1)",
+            }}
+          >
+            【v1.2】
           </div>
         </div>
         {PROTOCOLS.map((p) => (
