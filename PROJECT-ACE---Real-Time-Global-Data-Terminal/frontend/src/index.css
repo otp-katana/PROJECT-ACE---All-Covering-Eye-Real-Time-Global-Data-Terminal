@@ -13,8 +13,11 @@
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* ── PART: 2 ][ COLOR PALETTE ─────────────────────────────────────────────── */
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Active design system colors, consumed as inline styles throughout the... */
-/* ...dashboard (not all values below are wired to every component yet). */
+/* Design system reference palette. Currently only --bg-root and --text are... */
+/* ...consumed (see PART 3). Components style themselves with inline hex/rgba... */
+/* ...values rather than these variables — this palette exists as the canonical... */
+/* ...source of truth for those inline values and as a migration target if... */
+/* ...components move to CSS variables later. */
 :root {
   --bg-root: #08080f;
   --bg-panel: rgba(13, 12, 26, 0.85);

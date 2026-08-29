@@ -9,4 +9,3 @@ export const OMORI = {
   c: 0.1,
   p: 1.1,
 };
-

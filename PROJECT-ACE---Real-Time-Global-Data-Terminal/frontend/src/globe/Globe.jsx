@@ -1,4 +1,3 @@
-
 // ───────────────────────────────────────────────────────────────────────────
 // Contents: GLOBE COMPONENT · OVERLAP RESOLUTION · SELECTION PANEL
 // ───────────────────────────────────────────────────────────────────────────
@@ -117,6 +116,18 @@ function resolveOverlapsVariable(positions, iterations = 30) {
   return pts;
 }
 
+function clampToViewport(left, top, width, height, margin = 10) {
+  let x = left;
+  let y = top;
+
+  if (x + width > window.innerWidth) x = left - width - margin * 2;
+  if (y + height > window.innerHeight) y = window.innerHeight - height - margin;
+  if (y < margin) y = margin;
+  if (x < margin) x = margin;
+
+  return { x, y };
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // ── PART: 3 ][ SELECTION PANEL ─────────────────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
@@ -138,21 +149,13 @@ function SelectionPanel({ box, onPointClick }) {
   const boxW = Math.max(maxX - minX, 1);
   const boxH = Math.max(maxY - minY, 1);
 
-  let panelLeft = maxX + margin;
-  let panelTop = minY;
-
-  if (panelLeft + panelW > window.innerWidth) {
-    panelLeft = minX - panelW - margin;
-  }
-  if (panelTop + panelH > window.innerHeight) {
-    panelTop = window.innerHeight - panelH - margin;
-  }
-  if (panelTop < margin) {
-    panelTop = margin;
-  }
-  if (panelLeft < margin) {
-    panelLeft = margin;
-  }
+  const { x: panelLeft, y: panelTop } = clampToViewport(
+    maxX + margin,
+    minY,
+    panelW,
+    panelH,
+    margin,
+  );
 
   const basePointSize = 20;
 

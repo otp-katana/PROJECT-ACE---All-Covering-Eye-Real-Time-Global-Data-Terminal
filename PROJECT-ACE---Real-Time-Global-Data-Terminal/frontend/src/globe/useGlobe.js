@@ -1,4 +1,3 @@
-
 // ───────────────────────────────────────────────────────────────────────────
 // Contents: MOCK DATA · MAIN SCENE SETUP (scene/camera/renderer, globe
 //           meshes, continent outlines, orbital rings, data layer groups,
@@ -53,6 +52,21 @@ const MOCK_FAULTS = [
   },
 ];
 
+/**
+ * Converts geographic coordinates to a point on the unit sphere.
+ * Shared by continent outlines, seismic/volcanic points, and fault lines —
+ * keeping this in one place avoids subtle sign/axis mismatches between layers.
+ */
+function latLonToVector3(lat, lon) {
+  const phi = ((90 - lat) * Math.PI) / 180;
+  const theta = ((lon + 180) * Math.PI) / 180;
+  return new THREE.Vector3(
+    -Math.sin(phi) * Math.cos(theta),
+    Math.cos(phi),
+    Math.sin(phi) * Math.sin(theta),
+  );
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // ── PART: 2 ][ MAIN SCENE SETUP ────────────────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
@@ -73,7 +87,6 @@ export function useGlobe(
   onSelectionBoxChange,
   focusRequest,
 ) {
-
   // ───────────────────────────────────────────────────────────────────────────
   // ── SUB: SCENE, CAMERA, RENDERER ───────────────────────────────────────────
   // ───────────────────────────────────────────────────────────────────────────
@@ -107,7 +120,6 @@ export function useGlobe(
   const pulseStartTime = useRef(0);
   const selectedPointRef = useRef(null);
   const prevMouse = useRef({ x: 0, y: 0 });
-
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -183,16 +195,9 @@ export function useGlobe(
         continentLineMatRef.current = lineMat;
 
         const processRing = (ring) => {
-          const points = ring.map(([lon, lat]) => {
-            const phi = ((90 - lat) * Math.PI) / 180;
-            const theta = ((lon + 180) * Math.PI) / 180;
-            return new THREE.Vector3(
-              -Math.sin(phi) * Math.cos(theta),
-              Math.cos(phi),
-              Math.sin(phi) * Math.sin(theta),
-            );
-          });
+          const points = ring.map(([lon, lat]) => latLonToVector3(lat, lon));
           if (points.length < 2) return;
+
           const geo = new THREE.BufferGeometry().setFromPoints(points);
           globeGroup.add(new THREE.Line(geo, lineMat));
         };
@@ -205,7 +210,7 @@ export function useGlobe(
             coordinates.forEach((poly) => poly.forEach(processRing));
         });
       });
-    
+
     // ───────────────────────────────────────────────────────────────────────────
     // ── SUB: ORBITAL RINGS ─────────────────────────────────────────────────────
     // ───────────────────────────────────────────────────────────────────────────
@@ -759,14 +764,7 @@ export function useGlobe(
     group.clear();
 
     seismicEvents.forEach((q) => {
-      const phi = ((90 - q.lat) * Math.PI) / 180;
-      const theta = ((q.lon + 180) * Math.PI) / 180;
-      const pos = new THREE.Vector3(
-        -Math.sin(phi) * Math.cos(theta),
-        Math.cos(phi),
-        Math.sin(phi) * Math.sin(theta),
-      );
-
+      const pos = latLonToVector3(q.lat, q.lon);
       const scale = q.mag / 5;
 
       const pointGroup = new THREE.Group();
@@ -839,14 +837,7 @@ export function useGlobe(
           volcanoes.forEach((v) => {
             if (typeof v.lat !== "number" || typeof v.lon !== "number") return;
 
-            const phi = ((90 - v.lat) * Math.PI) / 180;
-            const theta = ((v.lon + 180) * Math.PI) / 180;
-            const pos = new THREE.Vector3(
-              -Math.sin(phi) * Math.cos(theta),
-              Math.cos(phi),
-              Math.sin(phi) * Math.sin(theta),
-            );
-
+            const pos = latLonToVector3(v.lat, v.lon);
             const scale = v.mag / 5;
 
             const pointGroup = new THREE.Group();
@@ -925,16 +916,9 @@ export function useGlobe(
       });
 
       MOCK_FAULTS.forEach((fault) => {
-        const points = fault.points.map(({ lat, lon }) => {
-          const phi = ((90 - lat) * Math.PI) / 180;
-          const theta = ((lon + 180) * Math.PI) / 180;
-          const v = new THREE.Vector3(
-            -Math.sin(phi) * Math.cos(theta),
-            Math.cos(phi),
-            Math.sin(phi) * Math.sin(theta),
-          );
-          return v.multiplyScalar(1.002);
-        });
+        const points = fault.points.map(({ lat, lon }) =>
+          latLonToVector3(lat, lon).multiplyScalar(1.002),
+        );
 
         const geo = new THREE.BufferGeometry().setFromPoints(points);
         group.add(new THREE.Line(geo, lineMat));

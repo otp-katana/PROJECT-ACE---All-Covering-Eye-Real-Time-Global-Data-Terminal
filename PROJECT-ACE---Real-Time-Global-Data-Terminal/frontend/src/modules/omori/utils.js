@@ -1,4 +1,4 @@
-import { FAULT_ZONES, OMORI } from "./constants";
+import { OMORI } from "./constants";
 
 // ───────────────────────────────────────────────────────────────────────────
 // ── PART: 1 ][ ALERT COLORS & LABEL ────────────────────────────────────────
@@ -21,6 +21,7 @@ export function alertLabel(mag) {
   return "CRITICAL";
 }
 
+// ───────────────────────────────────────────────────────────────────────────
 // ── PART: 2 ][ OMORI's LAW ─────────────────────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
 // Numerical integration of the Omori-Utsu aftershock decay law...
