@@ -312,8 +312,8 @@ function MagnitudeSlider({ value, onChange }) {
       </div>
       <input
         type="range"
-        min="0.0"
-        max="10.0"
+        min="1.0"
+        max="9.9"
         step="0.1"
         value={value}
         onChange={(e) => onChange(+e.target.value)}
@@ -330,7 +330,7 @@ function MagnitudeSlider({ value, onChange }) {
 // ...eruption dates (null) always remain visible — see project's scientific...
 // ...integrity principle: "no data" is not the same as "inactive".
 function EruptionYearSlider({ value, onChange }) {
-  const label = value <= 0 ? `MÖ ${Math.abs(value)}` : `MS ${value}`;
+  const label = value <= 0 ? `BC${Math.abs(value)}` : `AC ${value}`;
   return (
     <div
       style={{
@@ -447,7 +447,7 @@ function EventLog({ events, onEventClick, hoveredKey, onHoverChange }) {
                 whiteSpace: "nowrap",
               }}
             >
-              {e.place || "Bilinmeyen konum"}
+              {e.place || "Unknown Location"}
             </span>
             <span style={{ color: "rgba(0,0,0,0.4)", fontSize: 9 }}>
               {timeAgo(e.time)}
@@ -468,9 +468,9 @@ function timeAgo(timeStr) {
   if (!timeStr) return "";
   const diffMs = Date.now() - Number(timeStr);
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "şimdi";
-  if (mins < 60) return `${mins} dk önce`;
+  if (mins < 1) return "Present";
+  if (mins < 60) return `${mins} Minute Ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} sa önce`;
-  return `${Math.floor(hours / 24)} gün önce`;
+  if (hours < 24) return `${hours} Hour Ago`;
+  return `${Math.floor(hours / 24)} Day Ago`;
 }
