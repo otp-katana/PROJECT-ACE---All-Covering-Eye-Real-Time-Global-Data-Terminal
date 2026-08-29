@@ -17,9 +17,11 @@ router = APIRouter(prefix="/omori", tags=["omori"])
 
 @router.get("/events", response_model=list[SeismicEvent])
 async def list_seismic_events():
+    """Returns live earthquake data from USGS (all_day feed)."""
     return await get_seismic_events()
 
 
 @router.get("/volcanoes", response_model=list[SeismicEvent])
 async def list_volcanic_events():
+    """Returns Holocene volcano data from the Smithsonian GVP."""
     return await get_volcanic_events()

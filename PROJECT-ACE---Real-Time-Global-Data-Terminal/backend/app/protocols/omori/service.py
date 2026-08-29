@@ -13,8 +13,10 @@ from app.protocols.omori.schemas import SeismicEvent
 
 
 async def get_seismic_events() -> list[SeismicEvent]:
+    """Fetches live earthquake data. Currently: USGS only."""
     return await fetch_usgs_events()
 
 
 async def get_volcanic_events() -> list[SeismicEvent]:
+    """Fetches volcano data. Currently: Smithsonian GVP only."""
     return await fetch_gvp_volcanoes()

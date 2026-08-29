@@ -16,6 +16,7 @@ USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.ge
 
 
 async def fetch_usgs_events() -> list[SeismicEvent]:
+    """Fetches and normalizes today's global earthquakes from USGS."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(USGS_URL)
         response.raise_for_status()
@@ -23,8 +24,12 @@ async def fetch_usgs_events() -> list[SeismicEvent]:
 
     events = []
     for feature in data.get("features", []):
-        coords = feature["geometry"]["coordinates"]    # [lon, lat, depth]
-        props = feature["properties"]
+        geometry = feature.get("geometry")
+        if not geometry or "coordinates" not in geometry:
+            continue    # Skip malformed records rather than failing the whole feed
+
+        coords = geometry["coordinates"]    # [lon, lat, depth]
+        props = feature.get("properties", {})
         events.append(
             SeismicEvent(
                 lat=coords[1],

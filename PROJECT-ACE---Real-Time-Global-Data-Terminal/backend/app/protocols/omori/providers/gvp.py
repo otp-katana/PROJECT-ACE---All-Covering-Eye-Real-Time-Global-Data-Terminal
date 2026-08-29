@@ -25,8 +25,14 @@ GVP_URL = (
     "&outputFormat=application/json"
 )
 
+# GVP has no eruption-magnitude equivalent to USGS's earthquake "mag" field.
+# This placeholder keeps volcanoes compatible with SeismicEvent's shared...
+# ...mag-based visual scaling (see useGlobe.js).
+PLACEHOLDER_MAGNITUDE = 4.0
+
 
 async def fetch_gvp_volcanoes() -> list[SeismicEvent]:
+    """Fetches and normalizes all Holocene volcanoes from GVP."""
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.get(GVP_URL)
         response.raise_for_status()
@@ -47,7 +53,7 @@ async def fetch_gvp_volcanoes() -> list[SeismicEvent]:
             SeismicEvent(
                 lat=coords[1],
                 lon=coords[0],
-                mag=4.0,    # placeholder — see module note above
+                mag=PLACEHOLDER_MAGNITUDE,
                 place=props.get("VolcanoName"),
                 time=None,
                 last_eruption=props.get("LastEruption"),
