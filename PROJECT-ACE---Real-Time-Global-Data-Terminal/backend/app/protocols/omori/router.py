@@ -1,7 +1,7 @@
 
-# ─────────────────────────────────────────────────────────────────────────
-# ── PART: 1 ][ OMORI ROUTER ──────────────────────────────────────────────
-# ─────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
+# ── PART: 1 ][ OMORI ROUTER ────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
 # HTTP endpoints for the OMORI module. Both endpoints share the SeismicEvent...
 # ...schema — it was originally designed for earthquake data but its fields...
 # ...(lat, lon, mag, place, time, plus optional depth/updated/felt/tsunami and...

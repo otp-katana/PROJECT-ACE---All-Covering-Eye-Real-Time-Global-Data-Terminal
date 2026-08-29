@@ -1,7 +1,7 @@
 
-# ─────────────────────────────────────────────────────────────────────────
-# ── PART: 1 ][ USGS PROVIDER ─────────────────────────────────────────────
-# ─────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
+# ── PART: 1 ][ USGS PROVIDER ───────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
 # Fetches live earthquake data from USGS's "all_day" feed — all magnitudes,...
 # ...refreshed roughly every 60 seconds on USGS's end (polling faster than...
 # ...that on our side would just return the same cached data; see...
@@ -23,7 +23,7 @@ async def fetch_usgs_events() -> list[SeismicEvent]:
 
     events = []
     for feature in data.get("features", []):
-        coords = feature["geometry"]["coordinates"]  # [lon, lat, depth]
+        coords = feature["geometry"]["coordinates"]    # [lon, lat, depth]
         props = feature["properties"]
         events.append(
             SeismicEvent(
