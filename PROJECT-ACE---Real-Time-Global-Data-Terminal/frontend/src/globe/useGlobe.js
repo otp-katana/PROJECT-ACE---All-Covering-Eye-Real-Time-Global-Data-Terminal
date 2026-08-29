@@ -74,8 +74,9 @@ export function useGlobe(
   focusRequest,
 ) {
 
-  // ──────────────────────────────────────────────────────────────────────
-  // ── SUB: SCENE, CAMERA, RENDERER ──────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── SUB: SCENE, CAMERA, RENDERER ───────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
@@ -90,8 +91,9 @@ export function useGlobe(
   const boxStart = useRef({ x: 0, y: 0 });
   const justFinishedBoxSelect = useRef(false);
 
-  // ──────────────────────────────────────────────────────────────────────
-  // ── SUB: GLOBE MESHES ─────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // ── SUB: GLOBE MESHES ──────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   const solidSphereRef = useRef(null);
   const frozen = useRef(false);
   const navigating = useRef(false);
@@ -106,7 +108,7 @@ export function useGlobe(
   const selectedPointRef = useRef(null);
   const prevMouse = useRef({ x: 0, y: 0 });
 
-  // MAIN USEEFFECT
+
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -166,8 +168,9 @@ export function useGlobe(
     scene.add(globeGlow);
     globeGlowRef.current = globeGlow;
 
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: CONTINENT OUTLINES ───────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: CONTINENT OUTLINES ────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
       .then((r) => r.json())
       .then((world) => {
@@ -203,8 +206,9 @@ export function useGlobe(
         });
       });
     
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: ORBITAL RINGS ────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: ORBITAL RINGS ─────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     const ringConfigs = [
       {
         radius: 1.38,
@@ -301,8 +305,9 @@ export function useGlobe(
     });
     ringsRef.current = rings;
 
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: DATA LAYER GROUPS ────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: DATA LAYER GROUPS ─────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     const seismicGroup = new THREE.Group();
     seismicGroup.visible = false;
     globeGroup.add(seismicGroup);
@@ -318,10 +323,9 @@ export function useGlobe(
     globeGroup.add(faultsGroup);
     layersRef.current.faults = faultsGroup;
 
-    // ── MOUSE ETKİLEŞİMLERİ ───────────────────────────────────────────────
-
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: MOUSE & RAYCASTER INTERACTIONS ───────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: MOUSE & RAYCASTER INTERACTIONS ────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     const raycaster = new THREE.Raycaster();
     const pointerNDC = new THREE.Vector2();
 
@@ -539,8 +543,9 @@ export function useGlobe(
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: ANIMATION LOOP ───────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: ANIMATION LOOP ────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
 
@@ -703,8 +708,9 @@ export function useGlobe(
     };
     animate();
 
-    // ──────────────────────────────────────────────────────────────────────
-    // ── SUB: RESIZE HANDLER ───────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
+    // ── SUB: RESIZE HANDLER ────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
     const onResize = () => {
       if (!mountRef.current) return;
       const w = mountRef.current.clientWidth;
@@ -740,7 +746,6 @@ export function useGlobe(
   // Draws/redraws each data layer's points whenever its source data changes.
   // Seismic redraws on every seismicEvents update (polling); volcanic fetches...
   // ...once on first toggle-on; faults draws once from MOCK_FAULTS.
-
   useEffect(() => {
     const group = layersRef.current.seismic;
     if (!group) return;
@@ -942,7 +947,6 @@ export function useGlobe(
   // ───────────────────────────────────────────────────────────────────────────
   // ── PART: 4 ][ RING VISIBILITY ─────────────────────────────────────────────
   // ───────────────────────────────────────────────────────────────────────────
-
   useEffect(() => {
     ringsRef.current.forEach((r) => {
       r.group.visible = ringsVisible ?? true;
@@ -977,7 +981,6 @@ export function useGlobe(
   // ───────────────────────────────────────────────────────────────────────────
   // Client-side filtering — toggles point visibility without refetching data.
   // Kept separate from PART 3's drawing effects so filter changes are cheap.
-
   useEffect(() => {
     const group = layersRef.current.seismic;
     if (!group) return;
@@ -1010,7 +1013,6 @@ export function useGlobe(
   // Triggered when the event log (or a future caller) requests the camera...
   // ...navigate to a specific point. Computes target rotation and a safe zoom...
   // ...distance (see PART 2's animation loop for how this target is consumed).
-
   useEffect(() => {
     if (!focusRequest) return;
 
