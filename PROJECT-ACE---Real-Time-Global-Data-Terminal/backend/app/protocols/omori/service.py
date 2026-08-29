@@ -1,7 +1,7 @@
 
-# ─────────────────────────────────────────────────────────────────────────
-# ── PART: 1 ][ OMORI SERVICE LAYER ───────────────────────────────────────
-# ─────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
+# ── PART: 1 ][ OMORI SERVICE LAYER ─────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────
 # Thin orchestration layer between the router and the data providers.
 # Currently each function just delegates to a single provider (USGS or...
 # ...VP) — this indirection exists so that, when a second seismic source...

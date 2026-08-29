@@ -1,5 +1,6 @@
 import { FAULT_ZONES, OMORI } from "./constants";
 
+// ───────────────────────────────────────────────────────────────────────────
 // ── PART: 1 ][ ALERT COLORS & LABEL ────────────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
 // Maps a magnitude value to a UI color/label. Independent of data source...
