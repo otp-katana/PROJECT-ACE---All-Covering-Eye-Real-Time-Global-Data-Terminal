@@ -12,7 +12,7 @@ import OmoriPanel from "../modules/omori/OmoriPanel";
 // ───────────────────────────────────────────────────────────────────────────
 // ── PART: 1 ][ PROTOCOLS & LAYOUT CONSTANTS ────────────────────────────────
 // ───────────────────────────────────────────────────────────────────────────
-// Defines the six modules shown in the left sidebar. Only OMORI is currently...
+// Defines the seven modules shown in the left sidebar. Only OMORI is currently...
 // ...wired to a real panel — the rest render a "NOT YET DEPLOYED" placeholder...
 // ...until their own modules are built.
 const PROTOCOLS = [
@@ -60,7 +60,6 @@ const PROTOCOLS = [
 
 const NAV_H = 64;
 const SIDE_W = 280;
-const PANEL_W = 320;
 
 // ───────────────────────────────────────────────────────────────────────────
 // ── PART: 2 ][ ROOT COMPONENT — STATE & DATA FETCHING ──────────────────────
@@ -500,6 +499,7 @@ export default function MainLayout() {
               onToggle={toggleOmori}
               magnitudeFilter={magnitudeFilter}
               onMagnitudeChange={setMagnitudeFilter}
+              eruptionYearFilter={eruptionYearFilter}
               onEruptionYearChange={setEruptionYearFilter}
               seismicEvents={seismicEvents}
               onFocusRequest={(point) =>
